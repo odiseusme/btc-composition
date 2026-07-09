@@ -14,13 +14,28 @@ paths that consume them. This differs from the narrative order of the original f
 design, where the inclusion proof lives *inside* the seller-cancellation path. The
 reorder optimizes for a copier reading start-to-finish without holding a forward
 reference. It is a deliberate trade — copier comprehension over prose-fidelity — and
-is posed as a question rather than assumed. See Q1.
+is posed as a question rather than assumed. See Q1. *(Collaborator review confirmed
+the reordering still reads as the original design; the author may still veto.)*
+
+**Mapping to the forum post** — every element of the published design, and where it
+lives here:
+
+| Forum-post element | Outline section |
+|---|---|
+| The signed deal message | §1 |
+| Freshness (~4h window) | §2 |
+| Buyer withdrawal after deadline | §3, path 1 |
+| Seller cancellation | §3, path 2 (what it produces) + §4 (the proof) |
+| Verified Bitcoin payment (BtcTxCheck) | §4 |
+| Relay / parser assumptions | §4 boundary block + §6 |
 
 ---
 
 ## 0. Purpose & scope
 
-This is a minimal, safe-to-copy reference example: an ErgoScript test specification
+This is a minimal reference example — **intended to become safe-to-copy reference
+material once the blocking design pins are confirmed (Q4/Q3, §7)**: an ErgoScript test
+specification
 showing how to compose a **verified Bitcoin payment** into an OTC deal that releases
 an Ergo-side asset (a Bitcoin-backed token). It is a **reference the ecosystem copies
 to learn the pattern**, not a production product.
@@ -482,15 +497,22 @@ tuple fields; what changes with the tuple is the serializer, the signature fixtu
 and the resulting proof values). Q2 and Q3 are non-blocking limitations by comparison;
 Q1 is presentation.
 
+**The final signed tuple shape (Q4 + Q3 — one decision).** The published tuple is
+(amount, txid, timestamp). Both open questions below ask what else it must carry; they
+are presented together because the answer is a single design act — fixing the tuple —
+and every §1 encoding/continuity invariant extends to whatever shape is chosen.
+Candidate final tuple: **amount, txid, timestamp/deadline anchor, destination script
+hash, and possibly the buyer proposition.**
+
 - **Q4 (blocking, SPINE): does the destination script hash join the signed tuple?**
-  Recommended (option (c), §4): builder-supplied is unsafe, dropping the check removes
-  the composition this reference demonstrates. Extends the published tuple — the
-  author's call. If adopted: §1's encoding/continuity invariants extend to the grown
-  tuple, and the buyer gains one explicit off-chain check (the committed script is
-  their own).
-- **Q3: does the buyer's identity join the signed tuple?** Same root as Q4 — the
-  published tuple is thinner than the deal it binds. If not, buyer-identity remains a
-  named v1 limitation (§3) mitigated by message confidentiality and prompt submission.
+  Recommended (option (c), §4; collaborator concurs): builder-supplied is unsafe,
+  dropping the check removes the composition this reference demonstrates. Extends the
+  published tuple — the author's call. If adopted: the buyer gains one explicit
+  off-chain check (the committed script is their own).
+- **Q3: does the buyer's identity join the signed tuple?** Same root as Q4 — buyer
+  identity outside the tuple is a sharp edge for canonical reference material. If not
+  adopted, buyer-identity remains a named v1 limitation (§3) mitigated by message
+  confidentiality and prompt submission.
 - **Q2a: which replay-identity mechanism?** Signed-message identity (per the published
   design) vs. a fresh one-time Bitcoin address; stronger on-chain options also exist
   (a claimed-outpoint registry consuming a singleton state box, or a factory-issued
@@ -501,11 +523,12 @@ Q1 is presentation.
   unique destination — the granularity Q2a's mechanism must bind.
 - **Q1 (presentation): dependency order vs. narrative order.** This outline sequences
   seam primitives before the paths that consume them, deviating from the forum post's
-  prose order (where inclusion lives inside the cancellation path) — a deliberate
-  trade for copier comprehension, flagged in the structural note. Confirm or veto.
-- **Q5 (adjacent, stage-1): retrofit boundary notes?** Should recipient-binding and
-  payment-freshness — both handled here — be back-annotated into the stage-1 vault
-  spec as explicit "what a real deployment must add" notes, or named only here?
+  prose order — a deliberate trade for copier comprehension, flagged in the structural
+  note, with the mapping table tying every element back to the post. *(Collaborator
+  confirmed the reordering; author may veto.)*
+- **Q5 (resolved between collaborators, for awareness): stage-1 back-annotation.**
+  Recipient-binding and payment-freshness — both handled here — will be back-annotated
+  into the stage-1 vault spec as **boundary notes only**, not added scope.
 - **Q6 (process): sequencing.** Does the author's own extraction branch exist, and
   does this stage build on it or on the in-review relay extraction?
 
