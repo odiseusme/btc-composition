@@ -119,3 +119,60 @@ is composed by the amount-binding parser; spending policy supplied by composer.
   sha256(script) = 3cff11ce96d297d2af49a7650eac1a00791f392dabf928bb645da697e09217ea
 - Negative cases this fixture supports: wrong header id, wrong Merkle proof, wrong tx bytes,
   insufficient confs, wrong script hash, minSats above out value (e.g. > 2550000000).
+
+---
+
+## M1 INPUT-SIDE / OUTPOINT FIXTURE (parser-native strict fork, added 2026-07-10)
+
+Context: kushti fixed the design fork STRICT — the deal box precommits the exact
+Bitcoin outpoint the seller will spend; replay guard = Bitcoin's own double-spend rule
+(one outpoint, at most one confirmed spend, ever). The parser must therefore verify
+the presented tx SPENDS the committed outpoint. Current parser skips inputs entirely
+(Shannon's code pass) — these are the fixtures for the new obligation.
+All values derived and verified by computation from the M1 tx (block 93500).
+
+### The outpoint (the committed deal fact)
+- prev-txid, INTERNAL/hash order (as it appears in tx bytes, and as the contract
+  should commit it): eba8353ac2e5503f15548975108013246457ed83d331db760f0595b8bd7c54cb
+- prev-txid, display order (explorers only, never in contract comparisons):
+  cb547cbdb895050f76db31d383ed576424138010758954153f50e5c23a35a8eb
+- vout: 0  (LE bytes: 00000000)
+- BYTE-ORDER FLAG (same rule as txid-representation-continuity): the outpoint's
+  prev-txid appears in the raw tx bytes in INTERNAL order. The committed register value
+  must be internal order too, compared unchanged. A display-order commitment fails
+  closed at best.
+
+### Byte offsets (M1: inputCount=1, so input 0 at fixed offsets)
+- version: 0..4 | inputCount varint: byte 4
+- input 0 prev-txid: bytes 5..37 | vout: bytes 37..41 (4B LE)
+- scriptSig len: byte 41 (M1: 0x8c = 140) | scriptSig: 42..182 | sequence: 182..186
+- VERIFIED: outputCount byte at 186 == 2; outputs end == size-4 (locktime aligned);
+  dSHA256(tx) display == d8c9d6...08ce39 (matches M1 record). All True by computation.
+
+### Position note (kushti: "input position can be passed via context extension var")
+- Input 0's outpoint sits at FIXED offsets (5..41) because the varint precedes it.
+- Input 1's offset is DYNAMIC (depends on input 0's scriptSig length): the parser must
+  walk input 0 (37 + 1 + scriptSigLen + 4) to locate input 1. Within the existing
+  bounds (inputCount ∈ {1,2}) this is one bounded hop, not a loop.
+- The supplied position var must be bounds-checked against inputCount; an
+  out-of-range position must fail, never wrap or default.
+
+### Parser obligation (the new predicate arm)
+  spendsCommittedOutpoint =
+    txBytes.slice(inpOffset, inpOffset+32) == committedPrevTxid (internal order)
+    && txBytes.slice(inpOffset+32, inpOffset+36) == committedVout (4B LE)
+  where inpOffset is derived from the (bounds-checked) position var.
+
+### Negative cases this fixture supports
+- wrong prev-txid (any other 32B value at 5..37)
+- wrong vout (e.g. 01000000 vs committed 00000000)
+- byte-order confusion: committed value in display order (must NOT match)
+- position var out of range (>= inputCount) — must fail
+- position var pointing at input 1 in a 1-input tx — must fail (same as above)
+- correct outpoint but insufficient/wrong output side (composes with existing
+  amount/script negatives — outpoint match alone must not settle)
+
+### One-live-deal-per-outpoint residue (NOT a parser fixture — formation-side)
+Bitcoin guarantees at most one confirmed SPEND of the outpoint; nothing yet prevents
+two live deal boxes COMMITTING the same outpoint (one BTC payment, two vaults).
+Formation-time rule or on-chain factory — pending kushti (raised, unanswered).
