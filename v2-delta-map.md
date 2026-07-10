@@ -14,7 +14,7 @@ MUTATES (principle survives, mechanism changes) · PENDING (blocked on an open a
 | 4 | Canonical encoding defined | DIES* | no signed bytes to encode. *Reborn small if formation signs something |
 | 5 | Encoding reproduced by signer | DIES* | same dependency as #4 |
 | 6 | 255-bit response | DIES* | no Schnorr-in-script. *Only returns if formation uses explicit Schnorr rather than native proveDlog — prefer native, keep it dead |
-| 7 | Replay | MUTATES ★ | the big win: off-chain limitation → CONTRACT-enforced. Precommitted outpoint + Bitcoin's double-spend rule = at-most-one settlement. v1's "target locus: contract" ACHIEVED. Residue: one-live-deal-per-outpoint is formation-side (pending kushti) |
+| 7 | Replay | MUTATES / PARTIAL ★ | improved but NOT complete: precommitted outpoint + Bitcoin's double-spend rule stops one outpoint being spent twice on Bitcoin, and stops repeat settlement of a *single* consumed vault. It does NOT stop the same Bitcoin proof settling TWO deal boxes that committed the same outpoint (proof reuse across vaults). So one-live-deal-per-outpoint is the MISSING HALF of replay, not a side residue. v1's "target: contract" is partially reached: contract-bounded per vault, not globally contract-enforced. Global uniqueness needs a formation rule / factory / registry (pending) |
 | 8 | Freshness window (msg) | MUTATES | message freshness dies; reborn as payment-height floor question: does the settlement tx have to confirm AFTER deal creation? (old-payment attack: seller commits an already-spent outpoint whose historical spend paid the buyer). Ties to Shannon Q6 relay-freshness-at-creation |
 | 9 | Freshness clock + consistency | MUTATES | message-clock part dies; clock-domain consistency survives for the deadline |
 | 10 | Deadline anchor | SURVIVES | 2-day/2-day still anchors to a contract-committed creation-time value |
@@ -27,7 +27,7 @@ MUTATES (principle survives, mechanism changes) · PENDING (blocked on an open a
 | 17 | Output anchoring | SURVIVES | unchanged |
 | 18 | Authorization pinned (both branches) | SURVIVES | sharper: settlement is proof-authorized by construction |
 | 19 | Funding (exact accounting) | SURVIVES | unchanged |
-| 20 | Buyer-identity provenance | MUTATES ★ | second big win: buyer address FIXED IN VAULT (kushti) — the interceptor/redirect hole closes at the contract level. Named limitation likely DIES; who writes the buyer's addresses into the vault = formation question (pending) |
+| 20 | Buyer-identity provenance | MUTATES / PARTIAL ★ | fixing the buyer script in the vault gives DESTINATION IMMUTABILITY (the settlement presenter cannot redirect payment), NOT buyer-identity provenance (that the committed script actually belongs to the intended buyer). The redirect hole closes on-chain; who authored the committed address, and whether the buyer inspected the authentic vault, remain formation + buyer-verification obligations (pending). Note: "buyer address" must mean a committed scriptPubKey or its hash, not a human-readable address string |
 | 21 | Register consumption (per branch) | MUTATES | register set changes: committed outpoint replaces registered txid; buyer BTC script joins |
 | 22 | Witness-stripped serialization | SURVIVES | unchanged |
 | 23 | Amount + script-hash binding | SURVIVES | script is now the vault-fixed buyer address. v1's Q4 (script hash into tuple) DISSOLVED — no tuple exists |
@@ -57,11 +57,24 @@ MUTATES (principle survives, mechanism changes) · PENDING (blocked on an open a
 
 ## Tally
 17 survive (5 with hardening notes) · 5 die (4 conditionally, on the formation answer)
-· 9 mutate (2 of them are the design's biggest wins: replay and buyer-identity move
-ON-CHAIN) · 2 pending re-decision (coexistence; seller-key provenance).
+· 9 mutate (2 of them — replay #7 and buyer-identity #20 — improve but land as
+PARTIAL, not completed on-chain wins) · 2 pending re-decision (coexistence; seller-key
+provenance). Several "survive" fates (10, 11, 12, 18, 22, 25) carry qualifiers pending
+the formation answer — see the pending correction pass for the full secondary downgrades.
 
 ## The v2 headline
-kushti's simplification converts the v1 outline's two NAMED LIMITATIONS (replay,
-buyer-identity) into contract-enforced invariants — the two ugliest rows of the v1
-map become its strongest. The price: one new open hole (formation/authorization) and
-one residue (one-per-outpoint). Net: strictly better design, pending two answers.
+kushti's simplification MATERIALLY NARROWS the v1 outline's two named limitations
+(replay, buyer-identity) but does not fully close either. Replay: settlement is now
+bound to one Bitcoin outpoint spend and a single vault can't re-settle, but one Bitcoin
+proof can still settle two vaults that committed the same outpoint — global
+one-settlement-per-outpoint needs a formation uniqueness rule. Buyer-identity: the
+payment destination is now immutable (can't be redirected), but that the committed
+script belongs to the intended buyer remains a formation + verification obligation.
+
+So the honest statement: the strict parser-native fork removes the free-standing
+settlement signature and binds every settlement to a vault-committed destination AND
+outpoint, narrowing the replay and destination-substitution surfaces significantly. It
+does NOT yet provide global one-settlement-per-outpoint or prove the committed
+destination is the buyer's. Those depend on formation authorization, authenticated
+creation-time freshness (payment-height floor), and duplicate-commitment prevention —
+more than two open obligations, not "strictly better, pending two answers."
