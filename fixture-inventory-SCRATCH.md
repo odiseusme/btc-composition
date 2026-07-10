@@ -122,6 +122,8 @@ is composed by the amount-binding parser; spending policy supplied by composer.
 
 ---
 
+---
+
 ## M1 INPUT-SIDE / OUTPOINT FIXTURE (parser-native strict fork, added 2026-07-10)
 
 Context: kushti fixed the design fork STRICT — the deal box precommits the exact
@@ -150,27 +152,70 @@ All values derived and verified by computation from the M1 tx (block 93500).
   dSHA256(tx) display == d8c9d6...08ce39 (matches M1 record). All True by computation.
 
 ### Position note (kushti: "input position can be passed via context extension var")
-- Input 0's outpoint sits at FIXED offsets (5..41) because the varint precedes it.
-- Input 1's offset is DYNAMIC (depends on input 0's scriptSig length): the parser must
-  walk input 0 (37 + 1 + scriptSigLen + 4) to locate input 1. Within the existing
-  bounds (inputCount ∈ {1,2}) this is one bounded hop, not a loop.
-- The supplied position var must be bounds-checked against inputCount; an
-  out-of-range position must fail, never wrap or default.
+- Input 0's outpoint sits at FIXED offsets (5..41) ONLY because M1 has one-byte
+  CompactSize encodings (inputCount and scriptSig-len both < 0xfd). This is
+  M1-SPECIFIC, not a general legacy-tx layout: in general inputCount is a CompactSize
+  (not always one byte), each scriptSig-len is a CompactSize, so even input 0 does not
+  universally begin at byte 5. The bounded-hop size for a general tx is
+  `36 + compactSizeLen(scriptSigLen) + scriptSigLen + 4` from the input's start, not the
+  fixed `37 + 1 + scriptSigLen + 4`. The "one bounded hop" holds only if the parser
+  enforces the restricted shape (one-byte CompactSize forms) as a prerequisite; state
+  that as a precondition, do not assume it.
+- CRITICAL — the position var is an INPUT INDEX, never a byte offset. The parser must:
+  (1) bounds-check `position < inputCount`; (2) walk the serialized inputs itself from
+  the start of the tx; (3) derive the exact byte start of input[position]. A
+  caller-supplied byte offset must NEVER be accepted: an attacker could aim it at
+  matching bytes inside a scriptSig, inside an output, at overlapping fields, or a
+  truncated region with unexpected slicing. The invariant:
+    `inpOffset must be derived exclusively by the canonical parser from the start of the
+     tx and the bounds-checked input index; no caller-supplied byte offset is accepted.`
 
 ### Parser obligation (the new predicate arm)
   spendsCommittedOutpoint =
+    let inpOffset = parserDerivedStart(bounds-checked position index)   // NOT a raw offset
     txBytes.slice(inpOffset, inpOffset+32) == committedPrevTxid (internal order)
     && txBytes.slice(inpOffset+32, inpOffset+36) == committedVout (4B LE)
-  where inpOffset is derived from the (bounds-checked) position var.
 
-### Negative cases this fixture supports
-- wrong prev-txid (any other 32B value at 5..37)
+  NECESSARY BUT NOT SUFFICIENT: spendsCommittedOutpoint proves only that the tx spends
+  the committed outpoint. It does NOT prove the tx makes the intended payment. The
+  settlement invariant must be a hard conjunction:
+    validSettlement =
+      transactionIsCanonicallyParsed
+      && spendsCommittedOutpoint
+      && paysAtLeastCommittedAmountToCommittedScript   // existing output-side arm
+      && derivedTxid == merkleProvenLeaf                // seam
+      && proofSatisfiesRelayAndDepthRules
+      && paymentSatisfiesCreationHeightRule             // pending formation/freshness answer
+  Outpoint match alone must never settle.
+
+### Negative cases this fixture supports (expanded per external review)
+Input-selection:
+- wrong prev-txid (any other 32B value at the selected input's outpoint)
 - wrong vout (e.g. 01000000 vs committed 00000000)
-- byte-order confusion: committed value in display order (must NOT match)
-- position var out of range (>= inputCount) — must fail
-- position var pointing at input 1 in a 1-input tx — must fail (same as above)
-- correct outpoint but insufficient/wrong output side (composes with existing
-  amount/script negatives — outpoint match alone must not settle)
+- 2-input tx: committed outpoint is input 0 but position says input 1 (and vice versa)
+- valid index whose selected input is wrong even though ANOTHER input holds the
+  committed outpoint (proves selection must be exact, not "tx contains it somewhere")
+- position >= inputCount (out of range) must fail; negative/oversized/malformed
+  position encoding must fail
+Parser-boundary:
+- truncated prev-txid / vout / scriptSig; missing sequence
+- inputCount or scriptSig-len encoded as multi-byte CompactSize (must be handled or
+  rejected per the stated shape precondition)
+- non-minimal CompactSize encoding (reject if canonicality requires)
+- declared scriptSig length extending past the tx; trailing garbage after locktime
+- output parser reaching a different locktime boundary than the txid serializer
+Offset-confusion (why inpOffset must be parser-derived):
+- the 36-byte outpoint sequence occurring INSIDE a scriptSig, not as a real outpoint
+- committed outpoint bytes occurring inside an output script
+- a manipulated position causing slicing to begin mid-field
+Representation:
+- vout in big-endian instead of LE; register int 0 vs 4-byte LE mismatch
+- byte-order confusion: committed prev-txid in display order (must NOT match)
+Transaction-class:
+- SegWit tx presented to the legacy parser (see witness-stripping seam)
+- coinbase-style null outpoint (unless explicitly disallowed elsewhere)
+- tx exceeding bounded input/output counts
+- correct payment output present but committed outpoint ABSENT (must not settle)
 
 ### One-live-deal-per-outpoint residue (NOT a parser fixture — formation-side)
 Bitcoin guarantees at most one confirmed SPEND of the outpoint; nothing yet prevents
