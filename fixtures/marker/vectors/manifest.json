@@ -1,0 +1,1703 @@
+{
+  "assumed_scan_capacity": 300,
+  "deployment": {
+    "btc_net": 1,
+    "ergo_net": 1
+  },
+  "donor": {
+    "raw_sha256": "1dfbc41a7af5b0bcb5e00563ef7ebbad2b4a39b67f4ee4214657ffb17eb19731",
+    "txid_display": "b33c1252ddc2fdb5396c7dc3ceed3749c587e3310c6df2f3605a38cc3c129e1f"
+  },
+  "grammar_doc_sha256": "65e0e0ef71a80a627fd7163aa9edf6d9539d0f142309e2ee6efee841630bc893",
+  "grammar_revision": "v3",
+  "schema_version": "1",
+  "semantics_note": "membership and encoding are orthogonal axes; an output can be CLAIMS+CANONICAL inside a MALFORMED transaction; unlisted outputs are IGNORED; reason_code is the FIRST failing Section 3 rule.",
+  "status": "PRE-FREEZE",
+  "synthetic_vector_warning": "These are synthetic transaction serializations built from the donor's input bytes. They are not asserted to be valid spends of the donor UTXO and must not be broadcast or used as Bitcoin inclusion/Merkle fixtures. Grammar verification only.",
+  "vectors": [
+    {
+      "capacity_expectation": null,
+      "case_id": "N1",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N1",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N1.hex",
+      "label": "zero claimants (payment, no marker)",
+      "notes": "no output claims the magic",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "03b8d863a912c77b5442238d54dcf8f490ab23e8bae2d0875a9dac39ceb1d652",
+      "txid_internal": "52d6b1ce39ac9d5a87d0e2bae823ab90f4f8dc548d2342547bc712a963d8b803"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N10",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N10",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N10.hex",
+      "label": "vout intended 1 encoded big-endian",
+      "notes": "00 00 00 01 decodes unsigned LE to 16777216 -> out of range",
+      "reason_code": "VOUT_OUT_OF_RANGE",
+      "synthetic": true,
+      "txid_display": "7acd1712563caf1707f56281834dfef14a4f288c7520be03c509281be9a92683",
+      "txid_internal": "8326a9e91b2809c503be20758c284f4af1fe4d838162f50717af3c561217cd7a"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N11a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N11",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N11a.hex",
+      "label": "vout == outputCount",
+      "notes": "2 outputs, vout=2 not < outputCount",
+      "reason_code": "VOUT_OUT_OF_RANGE",
+      "synthetic": true,
+      "txid_display": "546deccac537c3230fd8c721433880f41c0bd527d7badcabeac479a3ca3676a2",
+      "txid_internal": "a27636caa379c4eaabdcbad727d50b1cf480384321c7d80f23c337c5caec6d54"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N11b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N11",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N11b.hex",
+      "label": "vout == markerOutputIndex",
+      "notes": "marker at index 0 names vout=0 (itself)",
+      "reason_code": "VOUT_IS_MARKER",
+      "synthetic": true,
+      "txid_display": "712ef5d319f49f801e63ccd241126a1ec1c6798206b378d11ec64fecce05a175",
+      "txid_internal": "75a105ceec4fc61ed178b3068279c6c11e6a1241d2cc631e809ff419d3f52e71"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N11c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N11",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N11c.hex",
+      "label": "vout == 0xffffffff",
+      "notes": "high-bit-set vout decoded unsigned -> far out of range",
+      "reason_code": "VOUT_OUT_OF_RANGE",
+      "synthetic": true,
+      "txid_display": "34d9035bec558d2ca9ab89c7e1eb3c2931085be7363460c898de0e4d7c44ac9c",
+      "txid_internal": "9cac447c4d0ede98c8603436e75b0831293cebe1c789aba92c8d55ec5b03d934"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N12",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N12",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N12.hex",
+      "label": "nonzero value on canonical marker",
+      "notes": "canonical script but marker output value = 1 satoshi",
+      "reason_code": "NONZERO_MARKER_VALUE",
+      "synthetic": true,
+      "txid_display": "f496a07c58393f0e5d0c89923016d96e6337a192b5604d4c3b7d8bc6e45ff0ae",
+      "txid_internal": "aef05fe4c68b7d3b4c4d60b592a137636ed9163092890c5d0e3f39587ca096f4"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N13",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N13",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N13.hex",
+      "label": "named output fails; another output qualifies",
+      "notes": "anyOutputMatches killer: only the NAMED output counts",
+      "reason_code": "PAYMENT_SCRIPT_MISMATCH",
+      "synthetic": true,
+      "txid_display": "8a9e3fb9493ca3345b62faa18da771fa55697f4457a3d25bc3131870db18f72b",
+      "txid_internal": "2bf718db701813c35bd2a357447f6955fa71a78da1fa625b34a33c49b93f9e8a"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N14a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N14",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N14a.hex",
+      "label": "named output right script, amount too low",
+      "notes": "committed script, value 19999 < 20000",
+      "reason_code": "PAYMENT_AMOUNT_TOO_LOW",
+      "synthetic": true,
+      "txid_display": "5cb434d029bed45efc04f41e3e3e8abf54b3664e02a3da5121f8179ac1e7c008",
+      "txid_internal": "08c0e7c19a17f82151daa3024e66b354bf8a3e3e1ef404fc5ed4be29d034b45c"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N14b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N14",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N14b.hex",
+      "label": "named output sufficient amount, wrong script",
+      "notes": "value 20000 but wrong script at the named vout",
+      "reason_code": "PAYMENT_SCRIPT_MISMATCH",
+      "synthetic": true,
+      "txid_display": "4cd50fff60b2da760bee52d11cdccbec817d523e5f5918f7718f58992698136c",
+      "txid_internal": "6c13982699588f71f718595f3e527d81eccbdc1cd152ee0b76dab260ff0fd54c"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N15a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0,
+        299
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ],
+        "299": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N15",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N15a.hex",
+      "label": "second claimant at last of 300 outputs",
+      "notes": "300 outputs; hidden second claimant last -> full scan catches it",
+      "reason_code": "MULTIPLE_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "967a9b6d97004d8a666d136b1f224ad3046d6b4a2cfac2b9ba3b15a2929b9f30",
+      "txid_internal": "309f9b92a2153bbab9c2fa2c4a6b6d04d34a221f6b136d668a4d00976d9b7a96"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N15b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N15",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/N15b.hex",
+      "label": "one claimant, 300 outputs (at capacity)",
+      "notes": "300 outputs == assumed scan capacity; valid",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "8cce80f202d9946345b53cfc4fc4a131176bba6577246b95d12680d91bcfc8c2",
+      "txid_internal": "c2c8cf1bd98026d1956b247765ba6b1731a1c44ffc3cb5456394d902f280ce8c"
+    },
+    {
+      "capacity_expectation": {
+        "at_or_above_minimum": "USE_GRAMMAR_VERDICT",
+        "below_minimum": "REJECT_SCAN_CAPACITY",
+        "minimum_capacity": 301
+      },
+      "case_id": "N15c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N15",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/N15c.hex",
+      "label": "one claimant, 301 outputs (over capacity)",
+      "notes": "301 > assumed scan capacity 300; grammar valid but capacity-gated",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "6d5241e98d1335fcddeeb0fd2e442edafa353d8ef75843d5fb781955fb95357a",
+      "txid_internal": "7a3595fb551978fbd54358f78e3d35fada2e442efdb0eeddfc35138de941526d"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N2a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0,
+        1
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ],
+        "1": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N2",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N2a.hex",
+      "label": "two canonical claimants, same vault_id",
+      "notes": "two canonical markers -> ambiguity",
+      "reason_code": "MULTIPLE_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "2d5fe7aa905f52f31262accc3386f9ea89c56adbb4cd7be94391859aa3a9ff65",
+      "txid_internal": "65ffa9a39a859143e97bcdb4db6ac589eaf98633ccac6212f3525f90aae75f2d"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N2b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0,
+        1
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ],
+        "1": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N2",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N2b.hex",
+      "label": "two canonical claimants, different vault_ids",
+      "notes": "two canonical markers naming different vaults -> ambiguity",
+      "reason_code": "MULTIPLE_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "654dddd8592bfe75708b16bd0bd9d16fc7b23e98d8a9390b16f756d392b58dfb",
+      "txid_internal": "fb8db592d356f7160b39a9d8983eb2c76fd1d90bbd168b7075fe2b59d8dd4d65"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N3a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N3",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N3a.hex",
+      "label": "wrong payload length 42",
+      "notes": "direct push of 42 bytes; claims but non-canonical",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "dc493de94184063234c86f20bc97a7b571583b2fda5fa47647887f30501a21f1",
+      "txid_internal": "f1211a50307f884776a45fda2f3b5871b5a797bc206fc83432068441e93d49dc"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N3b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N3",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N3b.hex",
+      "label": "wrong payload length 44",
+      "notes": "direct push of 44 bytes; claims but non-canonical",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "c4e85c95afdadc1f884ddc8e802067a2a4298e9943a538a5b56f2c75003e378d",
+      "txid_internal": "8d373e00752c6fb5a538a543998e29a4a26720808edc4d881fdcdaaf955ce8c4"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N3c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N3",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N3c.hex",
+      "label": "declared 43 but physically truncated",
+      "notes": "declared 43, only 40 payload bytes; truncation rule -> claims",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "c60500d585f5a23f81d806b7d40e18c0527c97c88556aefeeb6f1b4ebe47bc25",
+      "txid_internal": "25bc47be4e1b6febfeae5685c8977c52c0180ed4b706d8813fa2f585d50005c6"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N3d",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N3",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N3d.hex",
+      "label": "declared 43 with a trailing byte",
+      "notes": "canonical push plus one trailing byte; non-canonical",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "6cc19c86d3f79e4861b5f8d300bf56279a69c9305f1a79e3a52157d39c640b3d",
+      "txid_internal": "3d0b649cd35721a5e3791a5f30c9699a2756bf00d3f8b561489ef7d3869cc16c"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N3e",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N3",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N3e.hex",
+      "label": "declared 43 with a trailing second push",
+      "notes": "canonical push plus a trailing second push; non-canonical",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "7f3e58098424bb01688e90c12ea77d6a57b530029e2d1d5523952115d90116e0",
+      "txid_internal": "e01601d915219523551d2d9e0230b5576a7da72ec1908e6801bb248409583e7f"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N4a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N4",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N4a.hex",
+      "label": "PUSHDATA1 encoding alone",
+      "notes": "correct payload via PUSHDATA1; non-canonical claimant",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "c83c0efdad259a784511179cf01916cdb4740de25184c40d3cf509973f71e3ba",
+      "txid_internal": "bae3713f9709f53c0dc48451e20d74b4cd1619f09c171145789a25adfd0e3cc8"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N4b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N4",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N4b.hex",
+      "label": "PUSHDATA2 encoding alone",
+      "notes": "correct payload via PUSHDATA2; non-canonical claimant",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "c4278e9bd92b353332a27544dcbaf83cf229479517ee3c8672747e3f9f74299f",
+      "txid_internal": "9f29749f3f7e7472863cee17954729f23cf8badc4475a23233352bd99b8e27c4"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N4c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N4",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N4c.hex",
+      "label": "PUSHDATA4 encoding alone",
+      "notes": "correct payload via PUSHDATA4; non-canonical claimant",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "854ee5e251145c6e94d51306f7be70609675a49d8327014157b7449aa66dcc39",
+      "txid_internal": "39cc6da69a44b757410127839da475966070bef70613d5946e5c1451e2e54e85"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N4d",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0,
+        1
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ],
+        "1": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N4",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N4d.hex",
+      "label": "canonical + PUSHDATA1 -> two claimants",
+      "notes": "re-encoded second claimant cannot smuggle past exactly-one",
+      "reason_code": "MULTIPLE_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "468cb2e37500f843ba7984ef0eb031473504ba12d3a7da5ce9091b5f81bc9769",
+      "txid_internal": "6997bc815f1b09e95cdaa7d312ba04354731b00eef8479ba43f80075e3b28c46"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N4e",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0,
+        1
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ],
+        "1": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N4",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N4e.hex",
+      "label": "canonical + PUSHDATA2 -> two claimants",
+      "notes": "re-encoded second claimant cannot smuggle past exactly-one",
+      "reason_code": "MULTIPLE_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "f2322d5454679d4c5c16b681069593aa607e9312e0e7db8f3534289a107b4b88",
+      "txid_internal": "884b7b109a2834358fdbe7e012937e60aa93950681b6165c4c9d6754542d32f2"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N4f",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0,
+        1
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ],
+        "1": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N4",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N4f.hex",
+      "label": "canonical + PUSHDATA4 -> two claimants",
+      "notes": "re-encoded second claimant cannot smuggle past exactly-one",
+      "reason_code": "MULTIPLE_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "9fa387a5a3f04efb0dea76d0ebe471b03e17aba9b0deef62609311c153291e36",
+      "txid_internal": "361e2953c111936062efdeb0a9ab173eb071e4ebd076ea0dfb4ef0a3a587a39f"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N5",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N5a.hex",
+      "label": "PUSHDATA1 declared 0 then magic (ignored)",
+      "notes": "declared length 0 < 4 -> does not claim",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "e4302c2b5b03057470b6cfe464ed7fd110c85bfb375260be9b1fc9146652a479",
+      "txid_internal": "79a4526614c91f9bbe605237fb5bc810d17fed64e4cfb6707405035b2b2c30e4"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N5",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N5b.hex",
+      "label": "PUSHDATA1 declared 1 then magic (ignored)",
+      "notes": "declared length 1 < 4 -> does not claim",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "99622df9b4c11024f958e8463d36d9d170328ca821758c4610d3acc6ad814cf2",
+      "txid_internal": "f24c81adc6acd310468c7521a88c3270d1d9363d46e858f92410c1b4f92d6299"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N5",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N5c.hex",
+      "label": "PUSHDATA1 declared 2 then magic (ignored)",
+      "notes": "declared length 2 < 4 -> does not claim",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "68af64b7f58c05bfee181ede6ccc0c13a6064c464a03e6a3d2da58392bde2390",
+      "txid_internal": "9023de2b3958dad2a3e6034a464c06a6130ccc6cde1e18eebf058cf5b764af68"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5d",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N5",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N5d.hex",
+      "label": "PUSHDATA1 declared 3 then magic (ignored)",
+      "notes": "declared length 3 < 4 -> does not claim",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "dae3183fc657ba11a48f8c20ccacdb7a8b6d9eceafaa508a34cb499b938f2443",
+      "txid_internal": "43248f939b49cb348a50aaafce9e6d8b7adbaccc208c8fa411ba57c63f18e3da"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5e",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N5",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N5e.hex",
+      "label": "declared >=4 magic present, push beyond slice",
+      "notes": "PUSHDATA1 declared 43, only 4 physical magic bytes; claims (trunc)",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "2ae4085933361c6e17782db1c63275656bab4ba67f1052b294dc1c7570f2adf4",
+      "txid_internal": "f4adf270751cdc94b252107fa64bab6b657532c6b12d78176e1c36335908e42a"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5f",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N5",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N5f.hex",
+      "label": "slice ends before four magic bytes (ignored)",
+      "notes": "direct push declared 5, only 3 physical bytes; magic incomplete",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "2bd7ce223b431c8478e0438d113f8bbb1908c303ee9eb676a3e17e8d2be9319b",
+      "txid_internal": "9b31e92b8d7ee1a376b69eee03c30819bb8b3f118d43e078841c433b22ced72b"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5g",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N5",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N5g.hex",
+      "label": "incomplete PUSHDATA1 length prefix (ignored)",
+      "notes": "no length byte after 0x4c -> no decodable push",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "a83165af868b50f68861ecb1eeb9b1e7ad0a583ffcada0417fa7750cceff7d0c",
+      "txid_internal": "0c7dffce0c75a77f41a0adfc3f580aade7b1b9eeb1ec6188f6508b86af6531a8"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5h",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N5",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N5h.hex",
+      "label": "incomplete PUSHDATA2 length prefix (ignored)",
+      "notes": "only 1 of 2 length bytes after 0x4d -> no decodable push",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "edd04cef58c83bc045fcbfe51743703397a6ba5a93d80fed78c109999da502d3",
+      "txid_internal": "d302a59d9909c178ed0fd8935abaa69733704317e5bffc45c03bc858ef4cd0ed"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5i",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N5",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N5i.hex",
+      "label": "incomplete PUSHDATA4 length prefix (ignored)",
+      "notes": "only 3 of 4 length bytes after 0x4e -> no decodable push",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "5cee149635242781c1e405aa1992338be13edb814fce26ff5c6e8947731f0302",
+      "txid_internal": "02031f7347896e5cff26ce4f81db3ee18b339219aa05e4c1812724359614ee5c"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N5j",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "NONCANONICAL"
+        ]
+      },
+      "family": "N5",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N5j.hex",
+      "label": "PUSHDATA4 length 0x80000004 with magic (claims)",
+      "notes": "unsigned decode keeps 0x80000004 positive; claims, malformed",
+      "reason_code": "NONCANONICAL_MARKER",
+      "synthetic": true,
+      "txid_display": "4add4e1e652582504981217c903ce1e7f7f52e9e1b9fd90238b2211640fb6bc3",
+      "txid_internal": "c36bfb401621b23802d99f1b9e2ef5f7e7e13c907c218149508225651e4edd4a"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N6a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N6",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N6a.hex",
+      "label": "empty first push then magic second push",
+      "notes": "OP_0 empty first push; magic in second push -> ignored",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "127f650ad1d51bc200a140112bad6cd4b4776445b91a0aff224315846ceca16c",
+      "txid_internal": "6ca1ec6c84154322ff0a1ab9456477b4d46cad2b1140a100c21bd5d10a657f12"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N6b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N6",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N6b.hex",
+      "label": "unrelated first push then magic second push",
+      "notes": "non-magic first push; magic in second push -> ignored",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "fb2baa514bc4dda03ab1f9c13cc3fa8c0e3efd331af78184d056b82b94cf0c37",
+      "txid_internal": "370ccf942bb856d08481f71a33fd3e0e8cfac33cc1f9b13aa0ddc44b51aa2bfb"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N6c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N6",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N6c.hex",
+      "label": "magic embedded in P2WSH program",
+      "notes": "0x00 0x20 witness v0 program; not OP_RETURN -> ignored",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "d6da9f7b2377a5e30e1dee83da15da37d4486ab11883a8abe2b1a73f2fa67c8a",
+      "txid_internal": "8a7ca62f3fa7b1e2aba88318b16a48d437da15da83ee1d0ee3a577237b9fdad6"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N6d",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N6",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N6d.hex",
+      "label": "magic embedded in P2TR program",
+      "notes": "0x51 0x20 witness v1 program; not OP_RETURN -> ignored",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "b608eac06d8b2a3dd034832ac0e91edd603505185de7b112e120c13daf574dc8",
+      "txid_internal": "c84d57af3dc120e112b1e75d18053560dd1ee9c02a8334d03d2a8b6dc0ea08b6"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N6e",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N6",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N6e.hex",
+      "label": "script not starting 0x6a",
+      "notes": "P2PKH-shaped, magic in hash160; first byte != 0x6a -> ignored",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "6d42fb561fc4b4d0bb14a7018affcafbca7acd6d7822698dbfd9609bc4c3b484",
+      "txid_internal": "84b4c3c49b60d9bf8d6922786dcd7acafbcaff8a01a714bbd0b4c41f56fb426d"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N6f",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N6",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N6f.hex",
+      "label": "near-miss magic ERGW",
+      "notes": "canonical framing but magic ERGW != ERGV -> ignored",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "fe2b5ada3cade15a2d12d840f74139a2be5979e888687de328c594b6dbc099b9",
+      "txid_internal": "b999c0dbb694c528e37d6888e87959bea23941f740d8122d5ae1ad3cda5a2bfe"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N6g",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N6",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N6g.hex",
+      "label": "near-miss magic ERGU",
+      "notes": "canonical framing but magic ERGU != ERGV -> ignored",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "860c86aed45115a26ad2510d05027bbe075c2d617ac6d192aac58082213766e9",
+      "txid_internal": "e96637218280c5aa92d1c67a612d5c07be7b02050d51d26aa21551d4ae860c86"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N6h",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [],
+      "expected_labels": {},
+      "family": "N6",
+      "grammar_verdict": "NOT-A-SETTLEMENT",
+      "hex_path": "hex/N6h.hex",
+      "label": "near-miss magic ergv (lowercase)",
+      "notes": "canonical framing but magic ergv != ERGV -> ignored",
+      "reason_code": "ZERO_CLAIMANTS",
+      "synthetic": true,
+      "txid_display": "c0430c504026b6681b0f2c45783cd31d6c26c59932c23e28f81a197a664afab1",
+      "txid_internal": "b1fa4a667a191af8283ec23299c5266c1dd33c78452c0f1b68b62640500c43c0"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N7",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N7",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N7.hex",
+      "label": "unknown version 0x02",
+      "notes": "canonical framing, version byte mutated to 0x02",
+      "reason_code": "VERSION_MISMATCH",
+      "synthetic": true,
+      "txid_display": "02878505aab8ef53fac4913443c06f6210124edcdf3fef7f5bfdbfc1b77f391b",
+      "txid_internal": "1b397fb7c1bffd5b7fef3fdfdc4e1210626fc0433491c4fa53efb8aa05858702"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N8a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N8",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N8a.hex",
+      "label": "ergo_net wrong (0x02 testnet)",
+      "notes": "ergo_net = testnet vs mainnet deployment",
+      "reason_code": "ERGO_NETWORK_MISMATCH",
+      "synthetic": true,
+      "txid_display": "f969edd47d5373114fbac4829faf391f7b3c3770b22416779ea9960e197c272f",
+      "txid_internal": "2f277c190e96a99e771624b270373c7b1f39af9f82c4ba4f1173537dd4ed69f9"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N8b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N8",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N8b.hex",
+      "label": "btc_net wrong (0x02 Testnet4)",
+      "notes": "btc_net = Testnet4 vs mainnet deployment",
+      "reason_code": "BITCOIN_NETWORK_MISMATCH",
+      "synthetic": true,
+      "txid_display": "9da9057c8f689df3191741addb0d44eec69587b6dd793af99c149592935da811",
+      "txid_internal": "11a85d939295149cf93a79ddb68795c6ee440ddbad411719f39d688f7c05a99d"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N8c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N8",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N8c.hex",
+      "label": "ergo_net unlisted enum 0xff",
+      "notes": "ergo_net unlisted value -> malformed",
+      "reason_code": "ERGO_NETWORK_MISMATCH",
+      "synthetic": true,
+      "txid_display": "7d6743ac4891919575c94bb7ff38aadc40507ae12c63f2e661917d045d931a57",
+      "txid_internal": "571a935d047d9161e6f2632ce17a5040dcaa38ffb74bc97595919148ac43677d"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N8d",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N8",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N8d.hex",
+      "label": "btc_net unlisted enum 0xff",
+      "notes": "btc_net unlisted value -> malformed",
+      "reason_code": "BITCOIN_NETWORK_MISMATCH",
+      "synthetic": true,
+      "txid_display": "b694a2d3ce0c357ff8a66fa4d0365243fc3157f32081ca4ecd7cf7b3ebcde4be",
+      "txid_internal": "bee4cdebb3f77ccd4eca8120f35731fc435236d0a46fa6f87f350cced3a294b6"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N9a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N9",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N9a.hex",
+      "label": "vault_id = sha256(EXPECTED_VAULT_ID)",
+      "notes": "unrelated 32-byte id (sha256 of the expected id); no flip/reversal relation",
+      "reason_code": "VAULT_ID_MISMATCH",
+      "synthetic": true,
+      "txid_display": "64e3614fbb6e692906ec90c1d8d16618cf41024e1e0b0b8dccc5b54b97f5dc46",
+      "txid_internal": "46dcf5974bb5c5cc8d0b0b1e4e0241cf1866d1d8c190ec0629696ebb4f61e364"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N9b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N9",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N9b.hex",
+      "label": "vault_id one-byte mismatch",
+      "notes": "first vault_id byte flipped by one bit",
+      "reason_code": "VAULT_ID_MISMATCH",
+      "synthetic": true,
+      "txid_display": "eb36a719d9fa6c2c14354fe34094954644af9a6bd8939024adbfd20de98e96fd",
+      "txid_internal": "fd968ee90dd2bfad249093d86b9aaf4446959440e34f35142c6cfad919a736eb"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N9c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N9",
+      "grammar_verdict": "MALFORMED",
+      "hex_path": "hex/N9c.hex",
+      "label": "vault_id full byte reversal",
+      "notes": "reversed id (the display-order-confusion counterexample)",
+      "reason_code": "VAULT_ID_MISMATCH",
+      "synthetic": true,
+      "txid_display": "91728f456fa1a8f4f9a3437ce933f55bef77bdd49b9737d6896985a0b8b52302",
+      "txid_internal": "0223b5b8a0856989d637979bd4bd77ef5bf533e97c43a3f9f4a8a16f458f7291"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P1a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P1",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P1a.hex",
+      "label": "canonical marker first, payment after",
+      "notes": "marker at index 0, vout=1 names the payment",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "4284e39405aa9291c414a4d7f2530cc4c83fde96c447198957c1ce2df35843fd",
+      "txid_internal": "fd4358f32dcec157891947c496de3fc8c40c53f2d7a414c49192aa0594e38442"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P1b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        1
+      ],
+      "expected_labels": {
+        "1": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P1",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P1b.hex",
+      "label": "canonical marker middle, payment before",
+      "notes": "marker at index 1, vout=0 names the earlier payment",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "518a634c1472ce9d7e654c315ad3ce6a950b69aa5c6a05aaa26b3d700c0ac2b9",
+      "txid_internal": "b9c20a0c703d6ba2aa056a5caa690b956aced35a314c657e9dce72144c638a51"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P1c",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        1
+      ],
+      "expected_labels": {
+        "1": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P1",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P1c.hex",
+      "label": "canonical marker last, payment before",
+      "notes": "marker at index 1 (last), vout=0 names the payment",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "d4db1f0e27688bc9e50dbb2f833372baf97f7b1e9683743d1fc3f8a9b5e236fd",
+      "txid_internal": "fd36e2b5a9f8c31f3d7483961e7b7ff9ba7233832fbb0de5c98b68270e1fdbd4"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P1d",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        1
+      ],
+      "expected_labels": {
+        "1": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P1",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P1d.hex",
+      "label": "canonical marker middle, payment after",
+      "notes": "marker at index 1, vout=2 names the later payment",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "6bdfbbeb97abad5c47d4780d0b68a5c63b0f6f7446618585bd45fd2715753090",
+      "txid_internal": "9030751527fd45bd85856146746f0f3bc6a5680b0d78d4475cadab97ebbbdf6b"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P2a",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        1
+      ],
+      "expected_labels": {
+        "1": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P2",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P2a.hex",
+      "label": "unrelated OP_RETURN before canonical marker",
+      "notes": "donor's real OP_RETURN (non-magic) ignored; marker at 1, vout=2",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "bac90c127d4fece77a1ba47ca85224047b42ec47f8f682c4449835a615bf65f2",
+      "txid_internal": "f265bf15a6359844c482f6f847ec427b042452a87ca41b7ae7ec4f7d120cc9ba"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P2b",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P2",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P2b.hex",
+      "label": "unrelated OP_RETURN after canonical marker",
+      "notes": "unrelated OP_RETURN after marker ignored; marker at 0, vout=1",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "7e64250600e986ed1dd07f8bbfb6ecb44f657c7f81cd2740079ae0c9b94d90db",
+      "txid_internal": "db904db9c9e09a074027cd817f7c654fb4ecb6bf8b7fd01ded86e9000625647e"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P3",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        1
+      ],
+      "expected_labels": {
+        "1": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P3",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P3.hex",
+      "label": "two qualifying payments, named vout is one",
+      "notes": "outputs 0 and 2 both qualify; vout=0 names one -> valid",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "dd4bdc0bff00d20f2e0e9a64e2a436557bcf6a45f32d680c9ddca88be8a9306a",
+      "txid_internal": "6a30a9e88ba8dc9d0c682df3456acf7b5536a4e2649a0e2e0fd200ff0bdc4bdd"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P4",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P4",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P4.hex",
+      "label": "vout == outputCount-1 (upper boundary)",
+      "notes": "3 outputs, vout=2 = outputCount-1, payment at 2",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "dc837f33fd180f1353d48daa3aa88db44550fc5d07a75981de0367aa4ff1e254",
+      "txid_internal": "54e2f14faa6703de8159a7075dfc5045b48da83aaa8dd453130f18fd337f83dc"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P5",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P5",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P5.hex",
+      "label": "vout=1 encoded 01 00 00 00 (LE control)",
+      "notes": "vout packed little-endian 01000000; payment at index 1",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "84d743257d7410529cc732a835689f6bbad507849cf0faa9c37a327ebfd99f0a",
+      "txid_internal": "0a9fd9bf7e327ac3a9faf09c8407d5ba6b9f6835a832c79c5210747d2543d784"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "P6",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "P6",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/P6.hex",
+      "label": "vout=256 (00 01 00 00), 257 outputs",
+      "notes": "257 outputs within scan capacity; payment at index 256",
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "ec6f2025b4e9ba1b883914c155a24339847dae15e4cc4085d17c4d9a4c752a1f",
+      "txid_internal": "1f2a754c9a4d7cd18540cce415ae7d843943a255c11439881bbae9b425206fec"
+    }
+  ]
+}

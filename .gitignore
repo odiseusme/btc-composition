@@ -1,1 +1,3 @@
 dev_principles.md
+__pycache__/
+*.pyc
