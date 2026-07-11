@@ -1,4 +1,4 @@
-# Settlement Marker Grammar — DRAFT v2 (pending lifecycle checkpoint)
+# Settlement Marker Grammar — DRAFT v3 (pending lifecycle checkpoint)
 
 Status: DRAFT — NOT FROZEN. Freeze is gated on kushti's lifecycle confirmation.
 Revision: v3, 2026-07-11 — second external adversarial pass on v2 found two
