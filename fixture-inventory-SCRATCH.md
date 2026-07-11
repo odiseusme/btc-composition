@@ -221,3 +221,88 @@ Transaction-class:
 Bitcoin guarantees at most one confirmed SPEND of the outpoint; nothing yet prevents
 two live deal boxes COMMITTING the same outpoint (one BTC payment, two vaults).
 Formation-time rule or on-chain factory — pending kushti (raised, unanswered).
+
+---
+
+## M2 MARKER-BEARING TRANSACTION FIXTURE (vault-id marker design, added 2026-07-11)
+
+Context: Shannon's marker design (accepted for review as the leading fix to the
+payment-output-reuse counterexample): the BTC settlement tx must contain EXACTLY ONE
+output claiming the protocol magic; that candidate must pass version, Ergo network,
+Bitcoin network, exact length, and canonical-push checks; its payload names the vault
+box id (deal id) and the payment vout; the named vout is verified against the committed
+buyer script and amount. anyOutputMatches is DEAD; exact-vout binding replaces it.
+Namespace rule (Shannon's refinement, adopted): unrelated OP_RETURN outputs with other
+prefixes are allowed; a malformed or wrong-version output CLAIMING our magic makes the
+settlement invalid (interpretation ambiguity).
+
+### Fixture transaction M2 (real, verified by computation)
+- txid (display): b33c1252ddc2fdb5396c7dc3ceed3749c587e3310c6df2f3605a38cc3c129e1f
+- block 342,854 (Feb 2015), Legacy (wTXID == TXID), 239 bytes, 1 input, 2 outputs
+- VERIFIED: dSHA256(raw bytes) == known txid (True); locktime aligned at size-4 (True);
+  all offsets below derived by walking the serialization, not transcribed.
+- Raw hex: in repo alongside this section (239 bytes; source: learnmeabitcoin explorer).
+
+### Offset map (all derived)
+- version: 0..4 | inputCount: byte 4 (=1)
+- input0 outpoint: bytes 5..41 (prev-txid display 40e3534d…, vout 1) | scriptSig 107B |
+  sequence ends at 153
+- outputCount: byte 153 (=2)
+- out0 (PAYMENT): starts 154 | value 20,000 sats | spk 25B at 163..188 | P2PKH,
+  hash160 3f53b874d776eea1da76b623c5bb4c43c2ff9d6e
+- out1 (DATA): starts 188 | value 0 | spk 38B at 197..235 |
+  spk[0]=0x6a (OP_RETURN), spk[1]=0x24 (push 36), payload at 199..235
+- locktime: 235..239
+
+### Role of this real transaction in the fixture set
+Its payload ("First OPReturn Message…") is NOT a protocol marker. M2 therefore serves
+as: (a) the structural base for offsets and the output-scan walk; (b) the
+UNRELATED-PREFIX case (an OP_RETURN that does not claim our magic must be ignored by
+the marker scan); (c) the donor shape for synthetic marker construction. Valid-marker
+positives and same-magic negatives are CONSTRUCTED from this base once the marker
+grammar is frozen (grammar pending the architectural checkpoint):
+  candidate payload layout (draft): magic | version | ergoNet | btcNet |
+  vaultBoxId(32) | paymentVout(1) — exact lengths and push encoding to be pinned.
+
+### The scan predicate (draft, replaces anyOutputMatches)
+  markerScan:
+    candidates = outputs whose spk = OP_RETURN + push(es) AND payload begins with MAGIC
+    require |candidates| == 1                      (zero or multiple claiming = FAIL)
+    m = the candidate; require m passes: version, ergoNet, btcNet, exact total length,
+        canonical minimal push encoding, value == 0
+    require m.vaultBoxId == SELF-or-origin vault id (per lifecycle spec)
+    require m.paymentVout < outputCount AND m.paymentVout != index(m)
+    require OUTPUTS[m.paymentVout] pays >= committedAmount to committedScript
+  Composes with (does not replace): spendsCommittedOutpoint, canonical parse, seam
+  txid == Merkle leaf, relay + depth rules.
+
+### Negative families this fixture supports
+Namespace / ambiguity (Shannon's rule):
+- zero outputs claiming magic (no marker) — FAIL
+- two outputs claiming magic (both valid, or valid+malformed) — FAIL (ambiguity)
+- one valid marker + one malformed SAME-MAGIC output — FAIL (the key refinement case)
+- one valid marker + unrelated different-prefix OP_RETURN (M2's real payload) — PASS
+- wrong version under our magic — FAIL; wrong Ergo or Bitcoin network domain — FAIL
+Grammar / encoding:
+- wrong total length; noncanonical (non-minimal) push; payload split across multiple
+  pushes if grammar requires single push; nonzero value on the marker output — FAIL
+Binding:
+- wrong vaultBoxId (any other 32B) — FAIL
+- correct vault id, wrong paymentVout (points at a non-matching output) — FAIL
+- paymentVout == marker's own index — FAIL; paymentVout >= outputCount — FAIL
+- named output pays wrong script or insufficient amount, while ANOTHER output would
+  match (the anyOutputMatches ghost) — FAIL: only the NAMED output counts
+Cross-deal (the counterexample, now as fixtures):
+- one tx, two inputs (two deals' outpoints), ONE marker naming vault A: vault A
+  passes only if its committed outpoint is among inputs AND named output matches;
+  vault B FAILS (marker names A, not B) — the theft is dead
+- one tx, two markers for two vaults — FAIL both (exactly-one rule); batching
+  deliberately excluded from the reference
+Chronology (narrow claim only, per Shannon):
+- pre-vault historical transaction — FAILS because its payload cannot contain the
+  vault's box id (wrong/absent deal id). This fixture proves REUSE rejection only;
+  it makes NO claim about confirmation ordering (box id exists at construction,
+  before confirmation). Chronological freshness remains a separate open item
+  (buyer-accepts-confirmed-vault and/or authenticated payment-height floor).
+M2 raw tx hex (txid b33c1252ddc2fdb5396c7dc3ceed3749c587e3310c6df2f3605a38cc3c129e1f, block 342854):
+0100000001754ed03940f9373d6796cc9b1dc97e6d06097f9aa5e2f8c5604f90e64d53e340010000006b483045022100a4347c689b6698079a5cb53189212a0fdc7037b0b3b22d557c2b84e4009bbaa1022028749cc4086a88bf60b7863e87614ce3235385c2146497977ce33f99458d0c300121039abf21fc7e635c52970010333ed867aee862f6985f019ec37ea23d2376d988fbffffffff02204e0000000000001976a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac0000000000000000266a244669727374204f5052657475726e204d6573736167652049207761732068657265203a2900000000
