@@ -33,6 +33,15 @@ DONOR = bytes.fromhex(donor.DONOR_HEX)
 _SEC = txkit.parse_tx_sections(DONOR)
 COMMITTED_SCRIPT = _SEC["outputs"][0]["script"]      # 25-byte P2PKH
 COMMITTED_SATS = 20000
+
+# Section 3 rule 7 (composed-vault ABI): the deal commits SHA256(scriptPubKey),
+# never the raw script. A SINGLE sha256 over the raw script bytes — no
+# CompactSize prefix, no reversal, no second hash — carried as 64 lowercase hex
+# characters. Computed here at construction time; the raw script itself stays in
+# the case metadata as construction provenance.
+COMMITTED_SCRIPT_HASH = hashlib.sha256(COMMITTED_SCRIPT).hexdigest()
+assert len(COMMITTED_SCRIPT_HASH) == 64, COMMITTED_SCRIPT_HASH
+assert COMMITTED_SCRIPT_HASH == COMMITTED_SCRIPT_HASH.lower()
 UNRELATED_OPRETURN = _SEC["outputs"][1]["script"]    # "First OPReturn..."; IGNORED
 
 EXPECTED_VAULT_ID = grammar.EXPECTED_VAULT_ID
@@ -46,11 +55,14 @@ MAGIC4 = CANON_PAYLOAD[:4]                            # the four magic bytes
 WRONG_SCRIPT = b"\x76\xa9\x14" + bytes(20) + b"\x88\xac"
 
 # Deal context shared by every case (constant; no case overrides it).
+# The ORACLE reads committed_script_hash (rule 7's ABI form); committed_script
+# is carried alongside it purely as construction provenance / metadata.
 DEFAULT_DEAL = {
     "expected_ergo_net": grammar.DEPLOY_ERGO_NET,
     "expected_btc_net": grammar.DEPLOY_BTC_NET,
     "expected_vault_id": EXPECTED_VAULT_ID,
     "committed_script": COMMITTED_SCRIPT,
+    "committed_script_hash": COMMITTED_SCRIPT_HASH,
     "committed_sats": COMMITTED_SATS,
 }
 
@@ -71,6 +83,11 @@ class CaseSpec:
     deal_context: dict
     notes: str
     capacity: object = None            # reserved; unused today
+    # Section 7 (sigmastate-v1). The profile layer is COMPUTED for every case
+    # by generate.py via verify.classify_profile; this optional field DECLARES
+    # the expected violations list where the case exists to pin the profile
+    # boundary (N15d/N15e). None = no declared expectation, nothing asserted.
+    expected_profile_violations: object = None
 
 
 CASES = {}
@@ -552,9 +569,47 @@ _add("N15c", family="N15", label="one claimant, 301 outputs (over capacity)",
      },
      notes="301 > assumed scan capacity 300; grammar valid but capacity-gated")
 
+# N15d / N15e — the PROFILE layer's own boundary (Section 7): outputCount 4
+# (in profile) vs 5 (out of profile). N15e is N15d plus exactly ONE APPENDED
+# non-claiming output: same inputs, same marker at index 0, same vout=1, same
+# named payment output, same scripts and values throughout. outputCount is the
+# ONLY property that differs, so a parser that accepts N15d and rejects N15e is
+# demonstrating its scan bound and nothing else. Both are grammar-VALID: the
+# abstract verdict never applies an implementation bound.
+_n15d_outs = [
+    canon_marker(1),                            # 0: canonical marker, vout=1
+    payment(),                                  # 1: the named payment output
+    raw_out(0, bytes.fromhex("6a01aa")),        # 2: filler, non-claiming
+    raw_out(0, bytes.fromhex("6a01bb")),        # 3: filler, non-claiming
+]
+_n15e_outs = _n15d_outs + [
+    raw_out(0, bytes.fromhex("6a01cc")),        # 4: the ONE appended output
+]
+
+_add("N15d", family="N15", label="4 outputs, single claimant (in profile)",
+     raw_tx=build(_n15d_outs),
+     labels={0: CANON}, grammar_verdict="VALID", reason_code=None,
+     expected_profile_violations=[],
+     notes="outputCount 4 == sigmastate-v1 scan capacity; in profile, valid")
+
+_add("N15e", family="N15", label="N15d plus one appended output (out of profile)",
+     raw_tx=build(_n15e_outs),
+     labels={0: CANON}, grammar_verdict="VALID", reason_code=None,
+     expected_profile_violations=[3],
+     notes="N15d + one appended non-claiming output; outputCount 5 is the ONLY "
+           "change -> out of profile (item 3), grammar verdict still VALID")
+
+# N15e must be N15d with exactly one output appended and NOTHING else changed:
+# assert the raw N15d serialization's output region is a strict prefix of
+# N15e's, and that the only extra bytes are the one appended TxOut.
+assert _n15e_outs[:4] == _n15d_outs, "N15e must preserve N15d's outputs exactly"
+assert len(_n15e_outs) == len(_n15d_outs) + 1, "N15e must append exactly one output"
+
 
 # --- required-set assertion ---
-REQUIRED_CASES = [
+# The v3 set, transcribed EXPLICITLY. v4 adds exactly two profile-boundary
+# cases and removes nothing: the set equality below is what guarantees that.
+V3_CASES = [
     "P1a", "P1b", "P1c", "P1d", "P2a", "P2b", "P3", "P4", "P5", "P6",
     "N1", "N2a", "N2b", "N3a", "N3b", "N3c", "N3d", "N3e",
     "N4a", "N4b", "N4c", "N4d", "N4e", "N4f",
@@ -564,17 +619,25 @@ REQUIRED_CASES = [
     "N11a", "N11b", "N11c", "N12", "N13", "N14a", "N14b",
     "N15a", "N15b", "N15c",
 ]
+assert len(V3_CASES) == len(set(V3_CASES)) == 61, len(V3_CASES)
 
-assert set(CASES) == set(REQUIRED_CASES), (
+V4_ADDED = ["N15d", "N15e"]
+
+REQUIRED_CASES = V3_CASES + V4_ADDED
+
+assert set(CASES) == set(V3_CASES) | set(V4_ADDED), (
     "case set mismatch: "
-    f"missing={sorted(set(REQUIRED_CASES) - set(CASES))} "
-    f"extra={sorted(set(CASES) - set(REQUIRED_CASES))}"
+    f"missing={sorted((set(V3_CASES) | set(V4_ADDED)) - set(CASES))} "
+    f"extra={sorted(set(CASES) - (set(V3_CASES) | set(V4_ADDED)))}"
 )
+assert set(CASES) - set(V3_CASES) == {"N15d", "N15e"}, "unexpected v4 additions"
+assert not set(V3_CASES) - set(CASES), "a v3 case was removed"
+assert len(CASES) == 63, len(CASES)
 
 
 def self_test() -> None:
     assert set(CASES) == set(REQUIRED_CASES)
-    assert len(CASES) == len(REQUIRED_CASES) == 61, len(CASES)
+    assert len(CASES) == len(REQUIRED_CASES) == 63, len(CASES)
     for cid, c in CASES.items():
         assert isinstance(c.raw_tx, bytes) and len(c.raw_tx) > 0, cid
         assert c.grammar_verdict in (

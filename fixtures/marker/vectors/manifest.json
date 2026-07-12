@@ -8,9 +8,26 @@
     "raw_sha256": "1dfbc41a7af5b0bcb5e00563ef7ebbad2b4a39b67f4ee4214657ffb17eb19731",
     "txid_display": "b33c1252ddc2fdb5396c7dc3ceed3749c587e3310c6df2f3605a38cc3c129e1f"
   },
-  "grammar_doc_sha256": "65e0e0ef71a80a627fd7163aa9edf6d9539d0f142309e2ee6efee841630bc893",
-  "grammar_revision": "v3",
-  "schema_version": "1",
+  "grammar_doc_sha256": "02790eaf4652a5710a81afed7128345a120e197b11513bee91079a4ac49166ff",
+  "grammar_revision": "v4",
+  "profile_note": "TWO VERDICT LAYERS (grammar Section 7). grammar_verdict is protocol truth from Sections 2-3, computed with NO implementation bound. profile_verdicts[P] is a SEPARATE layer for a named verifier profile P: it equals grammar_verdict when the transaction is IN PROFILE, else REJECT-OUT-OF-PROFILE, and profile_violations[P] lists every violated profile constraint as Section 7 item numbers in document order 1-4 (empty when in profile). Rejecting out of profile is fail-closed and is never a grammar result: P6 and the at-capacity N15 members are grammar-VALID but out of profile for sigmastate-v1, whose scan capacity is 4 outputs. The concrete 4-vs-5 boundary is N15d (in profile) vs N15e (N15d plus exactly one appended output). PAYMENT ABI (Section 3 rule 7): the deal commits committedScriptHash = SHA256(buyer scriptPubKey) -- a single SHA-256 over the raw scriptPubKey bytes exactly as they appear inside the output, with NO CompactSize length prefix, NO byte reversal, and NO second hash -- never the raw script itself. Carried as text it is exactly 64 lowercase hex characters representing the 32 raw bytes, decoded to bytes before comparison. deal_context.committed_script is retained as construction provenance only; the oracle reads committed_script_hash.",
+  "profiles": {
+    "sigmastate-v1": {
+      "compactsize_single_byte": true,
+      "constraint_items": {
+        "1": "stripped (non-witness) serialization only",
+        "2": "inputCount in {1, 2}",
+        "3": "outputCount in {1, 2, 3, 4} (scan capacity 4)",
+        "4": "every CompactSize field single-byte (< 0xfd)"
+      },
+      "max_inputs": 2,
+      "max_outputs": 4,
+      "min_inputs": 1,
+      "min_outputs": 1,
+      "stripped_only": true
+    }
+  },
+  "schema_version": "2",
   "semantics_note": "membership and encoding are orthogonal axes; an output can be CLAIMS+CANONICAL inside a MALFORMED transaction; unlisted outputs are IGNORED; reason_code is the FIRST failing Section 3 rule.",
   "status": "PRE-FREEZE",
   "synthetic_vector_warning": "These are synthetic transaction serializations built from the donor's input bytes. They are not asserted to be valid spends of the donor UTXO and must not be broadcast or used as Bitcoin inclusion/Merkle fixtures. Grammar verification only.",
@@ -21,6 +38,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -32,6 +50,12 @@
       "hex_path": "hex/N1.hex",
       "label": "zero claimants (payment, no marker)",
       "notes": "no output claims the magic",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "03b8d863a912c77b5442238d54dcf8f490ab23e8bae2d0875a9dac39ceb1d652",
@@ -43,6 +67,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -61,6 +86,12 @@
       "hex_path": "hex/N10.hex",
       "label": "vout intended 1 encoded big-endian",
       "notes": "00 00 00 01 decodes unsigned LE to 16777216 -> out of range",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "VOUT_OUT_OF_RANGE",
       "synthetic": true,
       "txid_display": "7acd1712563caf1707f56281834dfef14a4f288c7520be03c509281be9a92683",
@@ -72,6 +103,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -90,6 +122,12 @@
       "hex_path": "hex/N11a.hex",
       "label": "vout == outputCount",
       "notes": "2 outputs, vout=2 not < outputCount",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "VOUT_OUT_OF_RANGE",
       "synthetic": true,
       "txid_display": "546deccac537c3230fd8c721433880f41c0bd527d7badcabeac479a3ca3676a2",
@@ -101,6 +139,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -119,6 +158,12 @@
       "hex_path": "hex/N11b.hex",
       "label": "vout == markerOutputIndex",
       "notes": "marker at index 0 names vout=0 (itself)",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "VOUT_IS_MARKER",
       "synthetic": true,
       "txid_display": "712ef5d319f49f801e63ccd241126a1ec1c6798206b378d11ec64fecce05a175",
@@ -130,6 +175,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -148,6 +194,12 @@
       "hex_path": "hex/N11c.hex",
       "label": "vout == 0xffffffff",
       "notes": "high-bit-set vout decoded unsigned -> far out of range",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "VOUT_OUT_OF_RANGE",
       "synthetic": true,
       "txid_display": "34d9035bec558d2ca9ab89c7e1eb3c2931085be7363460c898de0e4d7c44ac9c",
@@ -159,6 +211,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -177,6 +230,12 @@
       "hex_path": "hex/N12.hex",
       "label": "nonzero value on canonical marker",
       "notes": "canonical script but marker output value = 1 satoshi",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONZERO_MARKER_VALUE",
       "synthetic": true,
       "txid_display": "f496a07c58393f0e5d0c89923016d96e6337a192b5604d4c3b7d8bc6e45ff0ae",
@@ -188,6 +247,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -206,6 +266,12 @@
       "hex_path": "hex/N13.hex",
       "label": "named output fails; another output qualifies",
       "notes": "anyOutputMatches killer: only the NAMED output counts",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "PAYMENT_SCRIPT_MISMATCH",
       "synthetic": true,
       "txid_display": "8a9e3fb9493ca3345b62faa18da771fa55697f4457a3d25bc3131870db18f72b",
@@ -217,6 +283,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -235,6 +302,12 @@
       "hex_path": "hex/N14a.hex",
       "label": "named output right script, amount too low",
       "notes": "committed script, value 19999 < 20000",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "PAYMENT_AMOUNT_TOO_LOW",
       "synthetic": true,
       "txid_display": "5cb434d029bed45efc04f41e3e3e8abf54b3664e02a3da5121f8179ac1e7c008",
@@ -246,6 +319,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -264,6 +338,12 @@
       "hex_path": "hex/N14b.hex",
       "label": "named output sufficient amount, wrong script",
       "notes": "value 20000 but wrong script at the named vout",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "PAYMENT_SCRIPT_MISMATCH",
       "synthetic": true,
       "txid_display": "4cd50fff60b2da760bee52d11cdccbec817d523e5f5918f7718f58992698136c",
@@ -275,6 +355,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -298,6 +379,15 @@
       "hex_path": "hex/N15a.hex",
       "label": "second claimant at last of 300 outputs",
       "notes": "300 outputs; hidden second claimant last -> full scan catches it",
+      "profile_verdicts": {
+        "sigmastate-v1": "REJECT-OUT-OF-PROFILE"
+      },
+      "profile_violations": {
+        "sigmastate-v1": [
+          3,
+          4
+        ]
+      },
       "reason_code": "MULTIPLE_CLAIMANTS",
       "synthetic": true,
       "txid_display": "967a9b6d97004d8a666d136b1f224ad3046d6b4a2cfac2b9ba3b15a2929b9f30",
@@ -309,6 +399,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -327,6 +418,15 @@
       "hex_path": "hex/N15b.hex",
       "label": "one claimant, 300 outputs (at capacity)",
       "notes": "300 outputs == assumed scan capacity; valid",
+      "profile_verdicts": {
+        "sigmastate-v1": "REJECT-OUT-OF-PROFILE"
+      },
+      "profile_violations": {
+        "sigmastate-v1": [
+          3,
+          4
+        ]
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "8cce80f202d9946345b53cfc4fc4a131176bba6577246b95d12680d91bcfc8c2",
@@ -342,6 +442,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -360,6 +461,15 @@
       "hex_path": "hex/N15c.hex",
       "label": "one claimant, 301 outputs (over capacity)",
       "notes": "301 > assumed scan capacity 300; grammar valid but capacity-gated",
+      "profile_verdicts": {
+        "sigmastate-v1": "REJECT-OUT-OF-PROFILE"
+      },
+      "profile_violations": {
+        "sigmastate-v1": [
+          3,
+          4
+        ]
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "6d5241e98d1335fcddeeb0fd2e442edafa353d8ef75843d5fb781955fb95357a",
@@ -367,10 +477,85 @@
     },
     {
       "capacity_expectation": null,
+      "case_id": "N15d",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N15",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/N15d.hex",
+      "label": "4 outputs, single claimant (in profile)",
+      "notes": "outputCount 4 == sigmastate-v1 scan capacity; in profile, valid",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "50c2b624f975cb1860a1e24faeb2d62cebd192b7fb5367b9bc518e2b8cff21f1",
+      "txid_internal": "f121ff8c2b8e51bcb96753fbb792d1eb2cd6b2ae4fe2a16018cb75f924b6c250"
+    },
+    {
+      "capacity_expectation": null,
+      "case_id": "N15e",
+      "deal_context": {
+        "committed_sats": 20000,
+        "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
+        "expected_btc_net": 1,
+        "expected_ergo_net": 1,
+        "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+      },
+      "expected_claimant_indices": [
+        0
+      ],
+      "expected_labels": {
+        "0": [
+          "CLAIMS",
+          "CANONICAL"
+        ]
+      },
+      "family": "N15",
+      "grammar_verdict": "VALID",
+      "hex_path": "hex/N15e.hex",
+      "label": "N15d plus one appended output (out of profile)",
+      "notes": "N15d + one appended non-claiming output; outputCount 5 is the ONLY change -> out of profile (item 3), grammar verdict still VALID",
+      "profile_verdicts": {
+        "sigmastate-v1": "REJECT-OUT-OF-PROFILE"
+      },
+      "profile_violations": {
+        "sigmastate-v1": [
+          3
+        ]
+      },
+      "reason_code": null,
+      "synthetic": true,
+      "txid_display": "ed408e352387f72ad203f56ff9129f5961cd6f0c244e8846e62c0ee7891a4ba5",
+      "txid_internal": "a54b1a89e70e2ce646884e240c6fcd61599f12f96ff503d22af78723358e40ed"
+    },
+    {
+      "capacity_expectation": null,
       "case_id": "N2a",
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -394,6 +579,12 @@
       "hex_path": "hex/N2a.hex",
       "label": "two canonical claimants, same vault_id",
       "notes": "two canonical markers -> ambiguity",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "MULTIPLE_CLAIMANTS",
       "synthetic": true,
       "txid_display": "2d5fe7aa905f52f31262accc3386f9ea89c56adbb4cd7be94391859aa3a9ff65",
@@ -405,6 +596,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -428,6 +620,12 @@
       "hex_path": "hex/N2b.hex",
       "label": "two canonical claimants, different vault_ids",
       "notes": "two canonical markers naming different vaults -> ambiguity",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "MULTIPLE_CLAIMANTS",
       "synthetic": true,
       "txid_display": "654dddd8592bfe75708b16bd0bd9d16fc7b23e98d8a9390b16f756d392b58dfb",
@@ -439,6 +637,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -457,6 +656,12 @@
       "hex_path": "hex/N3a.hex",
       "label": "wrong payload length 42",
       "notes": "direct push of 42 bytes; claims but non-canonical",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "dc493de94184063234c86f20bc97a7b571583b2fda5fa47647887f30501a21f1",
@@ -468,6 +673,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -486,6 +692,12 @@
       "hex_path": "hex/N3b.hex",
       "label": "wrong payload length 44",
       "notes": "direct push of 44 bytes; claims but non-canonical",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "c4e85c95afdadc1f884ddc8e802067a2a4298e9943a538a5b56f2c75003e378d",
@@ -497,6 +709,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -515,6 +728,12 @@
       "hex_path": "hex/N3c.hex",
       "label": "declared 43 but physically truncated",
       "notes": "declared 43, only 40 payload bytes; truncation rule -> claims",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "c60500d585f5a23f81d806b7d40e18c0527c97c88556aefeeb6f1b4ebe47bc25",
@@ -526,6 +745,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -544,6 +764,12 @@
       "hex_path": "hex/N3d.hex",
       "label": "declared 43 with a trailing byte",
       "notes": "canonical push plus one trailing byte; non-canonical",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "6cc19c86d3f79e4861b5f8d300bf56279a69c9305f1a79e3a52157d39c640b3d",
@@ -555,6 +781,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -573,6 +800,12 @@
       "hex_path": "hex/N3e.hex",
       "label": "declared 43 with a trailing second push",
       "notes": "canonical push plus a trailing second push; non-canonical",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "7f3e58098424bb01688e90c12ea77d6a57b530029e2d1d5523952115d90116e0",
@@ -584,6 +817,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -602,6 +836,12 @@
       "hex_path": "hex/N4a.hex",
       "label": "PUSHDATA1 encoding alone",
       "notes": "correct payload via PUSHDATA1; non-canonical claimant",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "c83c0efdad259a784511179cf01916cdb4740de25184c40d3cf509973f71e3ba",
@@ -613,6 +853,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -631,6 +872,12 @@
       "hex_path": "hex/N4b.hex",
       "label": "PUSHDATA2 encoding alone",
       "notes": "correct payload via PUSHDATA2; non-canonical claimant",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "c4278e9bd92b353332a27544dcbaf83cf229479517ee3c8672747e3f9f74299f",
@@ -642,6 +889,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -660,6 +908,12 @@
       "hex_path": "hex/N4c.hex",
       "label": "PUSHDATA4 encoding alone",
       "notes": "correct payload via PUSHDATA4; non-canonical claimant",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "854ee5e251145c6e94d51306f7be70609675a49d8327014157b7449aa66dcc39",
@@ -671,6 +925,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -694,6 +949,12 @@
       "hex_path": "hex/N4d.hex",
       "label": "canonical + PUSHDATA1 -> two claimants",
       "notes": "re-encoded second claimant cannot smuggle past exactly-one",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "MULTIPLE_CLAIMANTS",
       "synthetic": true,
       "txid_display": "468cb2e37500f843ba7984ef0eb031473504ba12d3a7da5ce9091b5f81bc9769",
@@ -705,6 +966,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -728,6 +990,12 @@
       "hex_path": "hex/N4e.hex",
       "label": "canonical + PUSHDATA2 -> two claimants",
       "notes": "re-encoded second claimant cannot smuggle past exactly-one",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "MULTIPLE_CLAIMANTS",
       "synthetic": true,
       "txid_display": "f2322d5454679d4c5c16b681069593aa607e9312e0e7db8f3534289a107b4b88",
@@ -739,6 +1007,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -762,6 +1031,12 @@
       "hex_path": "hex/N4f.hex",
       "label": "canonical + PUSHDATA4 -> two claimants",
       "notes": "re-encoded second claimant cannot smuggle past exactly-one",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "MULTIPLE_CLAIMANTS",
       "synthetic": true,
       "txid_display": "9fa387a5a3f04efb0dea76d0ebe471b03e17aba9b0deef62609311c153291e36",
@@ -773,6 +1048,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -784,6 +1060,12 @@
       "hex_path": "hex/N5a.hex",
       "label": "PUSHDATA1 declared 0 then magic (ignored)",
       "notes": "declared length 0 < 4 -> does not claim",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "e4302c2b5b03057470b6cfe464ed7fd110c85bfb375260be9b1fc9146652a479",
@@ -795,6 +1077,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -806,6 +1089,12 @@
       "hex_path": "hex/N5b.hex",
       "label": "PUSHDATA1 declared 1 then magic (ignored)",
       "notes": "declared length 1 < 4 -> does not claim",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "99622df9b4c11024f958e8463d36d9d170328ca821758c4610d3acc6ad814cf2",
@@ -817,6 +1106,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -828,6 +1118,12 @@
       "hex_path": "hex/N5c.hex",
       "label": "PUSHDATA1 declared 2 then magic (ignored)",
       "notes": "declared length 2 < 4 -> does not claim",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "68af64b7f58c05bfee181ede6ccc0c13a6064c464a03e6a3d2da58392bde2390",
@@ -839,6 +1135,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -850,6 +1147,12 @@
       "hex_path": "hex/N5d.hex",
       "label": "PUSHDATA1 declared 3 then magic (ignored)",
       "notes": "declared length 3 < 4 -> does not claim",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "dae3183fc657ba11a48f8c20ccacdb7a8b6d9eceafaa508a34cb499b938f2443",
@@ -861,6 +1164,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -879,6 +1183,12 @@
       "hex_path": "hex/N5e.hex",
       "label": "declared >=4 magic present, push beyond slice",
       "notes": "PUSHDATA1 declared 43, only 4 physical magic bytes; claims (trunc)",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "2ae4085933361c6e17782db1c63275656bab4ba67f1052b294dc1c7570f2adf4",
@@ -890,6 +1200,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -901,6 +1212,12 @@
       "hex_path": "hex/N5f.hex",
       "label": "slice ends before four magic bytes (ignored)",
       "notes": "direct push declared 5, only 3 physical bytes; magic incomplete",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "2bd7ce223b431c8478e0438d113f8bbb1908c303ee9eb676a3e17e8d2be9319b",
@@ -912,6 +1229,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -923,6 +1241,12 @@
       "hex_path": "hex/N5g.hex",
       "label": "incomplete PUSHDATA1 length prefix (ignored)",
       "notes": "no length byte after 0x4c -> no decodable push",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "a83165af868b50f68861ecb1eeb9b1e7ad0a583ffcada0417fa7750cceff7d0c",
@@ -934,6 +1258,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -945,6 +1270,12 @@
       "hex_path": "hex/N5h.hex",
       "label": "incomplete PUSHDATA2 length prefix (ignored)",
       "notes": "only 1 of 2 length bytes after 0x4d -> no decodable push",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "edd04cef58c83bc045fcbfe51743703397a6ba5a93d80fed78c109999da502d3",
@@ -956,6 +1287,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -967,6 +1299,12 @@
       "hex_path": "hex/N5i.hex",
       "label": "incomplete PUSHDATA4 length prefix (ignored)",
       "notes": "only 3 of 4 length bytes after 0x4e -> no decodable push",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "5cee149635242781c1e405aa1992338be13edb814fce26ff5c6e8947731f0302",
@@ -978,6 +1316,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -996,6 +1335,12 @@
       "hex_path": "hex/N5j.hex",
       "label": "PUSHDATA4 length 0x80000004 with magic (claims)",
       "notes": "unsigned decode keeps 0x80000004 positive; claims, malformed",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "NONCANONICAL_MARKER",
       "synthetic": true,
       "txid_display": "4add4e1e652582504981217c903ce1e7f7f52e9e1b9fd90238b2211640fb6bc3",
@@ -1007,6 +1352,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1018,6 +1364,12 @@
       "hex_path": "hex/N6a.hex",
       "label": "empty first push then magic second push",
       "notes": "OP_0 empty first push; magic in second push -> ignored",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "127f650ad1d51bc200a140112bad6cd4b4776445b91a0aff224315846ceca16c",
@@ -1029,6 +1381,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1040,6 +1393,12 @@
       "hex_path": "hex/N6b.hex",
       "label": "unrelated first push then magic second push",
       "notes": "non-magic first push; magic in second push -> ignored",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "fb2baa514bc4dda03ab1f9c13cc3fa8c0e3efd331af78184d056b82b94cf0c37",
@@ -1051,6 +1410,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1062,6 +1422,12 @@
       "hex_path": "hex/N6c.hex",
       "label": "magic embedded in P2WSH program",
       "notes": "0x00 0x20 witness v0 program; not OP_RETURN -> ignored",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "d6da9f7b2377a5e30e1dee83da15da37d4486ab11883a8abe2b1a73f2fa67c8a",
@@ -1073,6 +1439,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1084,6 +1451,12 @@
       "hex_path": "hex/N6d.hex",
       "label": "magic embedded in P2TR program",
       "notes": "0x51 0x20 witness v1 program; not OP_RETURN -> ignored",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "b608eac06d8b2a3dd034832ac0e91edd603505185de7b112e120c13daf574dc8",
@@ -1095,6 +1468,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1106,6 +1480,12 @@
       "hex_path": "hex/N6e.hex",
       "label": "script not starting 0x6a",
       "notes": "P2PKH-shaped, magic in hash160; first byte != 0x6a -> ignored",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "6d42fb561fc4b4d0bb14a7018affcafbca7acd6d7822698dbfd9609bc4c3b484",
@@ -1117,6 +1497,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1128,6 +1509,12 @@
       "hex_path": "hex/N6f.hex",
       "label": "near-miss magic ERGW",
       "notes": "canonical framing but magic ERGW != ERGV -> ignored",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "fe2b5ada3cade15a2d12d840f74139a2be5979e888687de328c594b6dbc099b9",
@@ -1139,6 +1526,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1150,6 +1538,12 @@
       "hex_path": "hex/N6g.hex",
       "label": "near-miss magic ERGU",
       "notes": "canonical framing but magic ERGU != ERGV -> ignored",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "860c86aed45115a26ad2510d05027bbe075c2d617ac6d192aac58082213766e9",
@@ -1161,6 +1555,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1172,6 +1567,12 @@
       "hex_path": "hex/N6h.hex",
       "label": "near-miss magic ergv (lowercase)",
       "notes": "canonical framing but magic ergv != ERGV -> ignored",
+      "profile_verdicts": {
+        "sigmastate-v1": "NOT-A-SETTLEMENT"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ZERO_CLAIMANTS",
       "synthetic": true,
       "txid_display": "c0430c504026b6681b0f2c45783cd31d6c26c59932c23e28f81a197a664afab1",
@@ -1183,6 +1584,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1201,6 +1603,12 @@
       "hex_path": "hex/N7.hex",
       "label": "unknown version 0x02",
       "notes": "canonical framing, version byte mutated to 0x02",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "VERSION_MISMATCH",
       "synthetic": true,
       "txid_display": "02878505aab8ef53fac4913443c06f6210124edcdf3fef7f5bfdbfc1b77f391b",
@@ -1212,6 +1620,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1230,6 +1639,12 @@
       "hex_path": "hex/N8a.hex",
       "label": "ergo_net wrong (0x02 testnet)",
       "notes": "ergo_net = testnet vs mainnet deployment",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ERGO_NETWORK_MISMATCH",
       "synthetic": true,
       "txid_display": "f969edd47d5373114fbac4829faf391f7b3c3770b22416779ea9960e197c272f",
@@ -1241,6 +1656,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1259,6 +1675,12 @@
       "hex_path": "hex/N8b.hex",
       "label": "btc_net wrong (0x02 Testnet4)",
       "notes": "btc_net = Testnet4 vs mainnet deployment",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "BITCOIN_NETWORK_MISMATCH",
       "synthetic": true,
       "txid_display": "9da9057c8f689df3191741addb0d44eec69587b6dd793af99c149592935da811",
@@ -1270,6 +1692,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1288,6 +1711,12 @@
       "hex_path": "hex/N8c.hex",
       "label": "ergo_net unlisted enum 0xff",
       "notes": "ergo_net unlisted value -> malformed",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "ERGO_NETWORK_MISMATCH",
       "synthetic": true,
       "txid_display": "7d6743ac4891919575c94bb7ff38aadc40507ae12c63f2e661917d045d931a57",
@@ -1299,6 +1728,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1317,6 +1747,12 @@
       "hex_path": "hex/N8d.hex",
       "label": "btc_net unlisted enum 0xff",
       "notes": "btc_net unlisted value -> malformed",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "BITCOIN_NETWORK_MISMATCH",
       "synthetic": true,
       "txid_display": "b694a2d3ce0c357ff8a66fa4d0365243fc3157f32081ca4ecd7cf7b3ebcde4be",
@@ -1328,6 +1764,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1346,6 +1783,12 @@
       "hex_path": "hex/N9a.hex",
       "label": "vault_id = sha256(EXPECTED_VAULT_ID)",
       "notes": "unrelated 32-byte id (sha256 of the expected id); no flip/reversal relation",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "VAULT_ID_MISMATCH",
       "synthetic": true,
       "txid_display": "64e3614fbb6e692906ec90c1d8d16618cf41024e1e0b0b8dccc5b54b97f5dc46",
@@ -1357,6 +1800,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1375,6 +1819,12 @@
       "hex_path": "hex/N9b.hex",
       "label": "vault_id one-byte mismatch",
       "notes": "first vault_id byte flipped by one bit",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "VAULT_ID_MISMATCH",
       "synthetic": true,
       "txid_display": "eb36a719d9fa6c2c14354fe34094954644af9a6bd8939024adbfd20de98e96fd",
@@ -1386,6 +1836,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1404,6 +1855,12 @@
       "hex_path": "hex/N9c.hex",
       "label": "vault_id full byte reversal",
       "notes": "reversed id (the display-order-confusion counterexample)",
+      "profile_verdicts": {
+        "sigmastate-v1": "MALFORMED"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": "VAULT_ID_MISMATCH",
       "synthetic": true,
       "txid_display": "91728f456fa1a8f4f9a3437ce933f55bef77bdd49b9737d6896985a0b8b52302",
@@ -1415,6 +1872,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1433,6 +1891,12 @@
       "hex_path": "hex/P1a.hex",
       "label": "canonical marker first, payment after",
       "notes": "marker at index 0, vout=1 names the payment",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "4284e39405aa9291c414a4d7f2530cc4c83fde96c447198957c1ce2df35843fd",
@@ -1444,6 +1908,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1462,6 +1927,12 @@
       "hex_path": "hex/P1b.hex",
       "label": "canonical marker middle, payment before",
       "notes": "marker at index 1, vout=0 names the earlier payment",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "518a634c1472ce9d7e654c315ad3ce6a950b69aa5c6a05aaa26b3d700c0ac2b9",
@@ -1473,6 +1944,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1491,6 +1963,12 @@
       "hex_path": "hex/P1c.hex",
       "label": "canonical marker last, payment before",
       "notes": "marker at index 1 (last), vout=0 names the payment",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "d4db1f0e27688bc9e50dbb2f833372baf97f7b1e9683743d1fc3f8a9b5e236fd",
@@ -1502,6 +1980,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1520,6 +1999,12 @@
       "hex_path": "hex/P1d.hex",
       "label": "canonical marker middle, payment after",
       "notes": "marker at index 1, vout=2 names the later payment",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "6bdfbbeb97abad5c47d4780d0b68a5c63b0f6f7446618585bd45fd2715753090",
@@ -1531,6 +2016,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1549,6 +2035,12 @@
       "hex_path": "hex/P2a.hex",
       "label": "unrelated OP_RETURN before canonical marker",
       "notes": "donor's real OP_RETURN (non-magic) ignored; marker at 1, vout=2",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "bac90c127d4fece77a1ba47ca85224047b42ec47f8f682c4449835a615bf65f2",
@@ -1560,6 +2052,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1578,6 +2071,12 @@
       "hex_path": "hex/P2b.hex",
       "label": "unrelated OP_RETURN after canonical marker",
       "notes": "unrelated OP_RETURN after marker ignored; marker at 0, vout=1",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "7e64250600e986ed1dd07f8bbfb6ecb44f657c7f81cd2740079ae0c9b94d90db",
@@ -1589,6 +2088,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1607,6 +2107,12 @@
       "hex_path": "hex/P3.hex",
       "label": "two qualifying payments, named vout is one",
       "notes": "outputs 0 and 2 both qualify; vout=0 names one -> valid",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "dd4bdc0bff00d20f2e0e9a64e2a436557bcf6a45f32d680c9ddca88be8a9306a",
@@ -1618,6 +2124,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1636,6 +2143,12 @@
       "hex_path": "hex/P4.hex",
       "label": "vout == outputCount-1 (upper boundary)",
       "notes": "3 outputs, vout=2 = outputCount-1, payment at 2",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "dc837f33fd180f1353d48daa3aa88db44550fc5d07a75981de0367aa4ff1e254",
@@ -1647,6 +2160,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1665,6 +2179,12 @@
       "hex_path": "hex/P5.hex",
       "label": "vout=1 encoded 01 00 00 00 (LE control)",
       "notes": "vout packed little-endian 01000000; payment at index 1",
+      "profile_verdicts": {
+        "sigmastate-v1": "VALID"
+      },
+      "profile_violations": {
+        "sigmastate-v1": []
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "84d743257d7410529cc732a835689f6bbad507849cf0faa9c37a327ebfd99f0a",
@@ -1676,6 +2196,7 @@
       "deal_context": {
         "committed_sats": 20000,
         "committed_script": "76a9143f53b874d776eea1da76b623c5bb4c43c2ff9d6e88ac",
+        "committed_script_hash": "3807e2ad511fda68d5e34212f1f03468b0f9c11b0302dfe687c201dfa0fc0e43",
         "expected_btc_net": 1,
         "expected_ergo_net": 1,
         "expected_vault_id": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
@@ -1694,6 +2215,15 @@
       "hex_path": "hex/P6.hex",
       "label": "vout=256 (00 01 00 00), 257 outputs",
       "notes": "257 outputs within scan capacity; payment at index 256",
+      "profile_verdicts": {
+        "sigmastate-v1": "REJECT-OUT-OF-PROFILE"
+      },
+      "profile_violations": {
+        "sigmastate-v1": [
+          3,
+          4
+        ]
+      },
       "reason_code": null,
       "synthetic": true,
       "txid_display": "ec6f2025b4e9ba1b883914c155a24339847dae15e4cc4085d17c4d9a4c752a1f",
