@@ -1,14 +1,18 @@
 """Protocol-agnostic Bitcoin transaction toolkit for the marker fixture set.
 
 This module knows NOTHING about the marker grammar. It provides CompactSize
-encoding, raw TxOut splicing, double-SHA256 txids, a legacy-only transaction
+encoding, raw TxOut splicing, double-SHA256 txids, a stripped-form transaction
 walker, and an output rebuilder. It imports nothing from the other generator
 modules (donor.py is used only inside self_test).
 
-LEGACY-ONLY: parse_tx_sections aborts if it sees a SegWit marker/flag
+STRIPPED (NON-WITNESS) SERIALIZATION ONLY: the operative form is the txid
+preimage. parse_tx_sections aborts if it sees the BIP144 witness marker/flag
 (0x00 followed by a nonzero flag byte) after the version, rather than
 interpreting it as zero inputs. verify.py implements the same check
-independently.
+independently. SegWit PAYMENTS remain fully supported — they serialize into the
+stripped form like any other output; what is rejected is the witness
+serialization itself. The term is "stripped/non-witness serialization only",
+not "legacy-only".
 
 RAW SPLICE discipline: txout() uses the given script verbatim. No validation,
 no normalization, no recalculation of anything inside the script, and never any
@@ -21,7 +25,7 @@ import struct
 
 
 class UnsupportedSerializationError(ValueError):
-    """Raised when a non-legacy (SegWit) serialization is encountered."""
+    """Raised when a full BIP144 witness serialization is encountered."""
 
 
 def compact_size(n: int) -> bytes:
@@ -88,10 +92,10 @@ def txid_display(raw_tx: bytes) -> str:
 
 
 def parse_tx_sections(raw_tx: bytes) -> dict:
-    """Legacy transaction walk. Returns offsets and slices.
+    """Stripped (non-witness) transaction walk. Returns offsets and slices.
 
     Used ONLY by the construction side; the verifier has its own parser. Aborts
-    with UnsupportedSerializationError on a SegWit marker/flag.
+    with UnsupportedSerializationError on the BIP144 witness marker/flag.
     """
     off = 0
     n = len(raw_tx)
@@ -100,11 +104,11 @@ def parse_tx_sections(raw_tx: bytes) -> dict:
     version = raw_tx[0:4]
     off = 4
 
-    # SegWit abort: 0x00 marker followed by a nonzero flag byte.
+    # BIP144 abort: 0x00 marker followed by a nonzero flag byte.
     if off + 1 < n and raw_tx[off] == 0x00 and raw_tx[off + 1] != 0x00:
         raise UnsupportedSerializationError(
-            "unsupported serialization: SegWit marker/flag detected; "
-            "this codebase is legacy-only"
+            "unsupported serialization: BIP144 witness marker/flag detected; "
+            "stripped/non-witness serialization only"
         )
 
     input_count, off = _read_compact_size(raw_tx, off)
@@ -221,14 +225,14 @@ def self_test() -> None:
     assert dsha256(raw).hex().startswith("1f9e123c"), dsha256(raw).hex()
     assert txid_display(raw) == donor.DONOR_TXID_DISPLAY, txid_display(raw)
 
-    # SegWit abort.
+    # BIP144 witness-form abort.
     segwit = bytes.fromhex("02000000") + b"\x00\x01" + b"\xde\xad\xbe\xef"
     try:
         parse_tx_sections(segwit)
     except UnsupportedSerializationError:
         pass
     else:
-        raise AssertionError("SegWit serialization was not rejected")
+        raise AssertionError("BIP144 witness serialization was not rejected")
 
     print("txkit.self_test: OK")
 

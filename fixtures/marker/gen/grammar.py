@@ -50,9 +50,26 @@ SCRIPT_LEN = PAYLOAD_LEN + 2            # OP_RETURN + push opcode + payload
 
 # --- Bookkeeping fields (verify.py imports these; not layout-logical). ---
 STATUS = "PRE-FREEZE"
-GRAMMAR_REVISION = "v3"
+GRAMMAR_REVISION = "v4"
 EXPECTED_GRAMMAR_SHA256 = (
-    "65e0e0ef71a80a627fd7163aa9edf6d9539d0f142309e2ee6efee841630bc893"
+    "02790eaf4652a5710a81afed7128345a120e197b11513bee91079a4ac49166ff"
+)
+
+# Section 3 rule 7: the 21M BTC supply bound, in satoshi. Integer arithmetic
+# only — never a float, never 21e14.
+SUPPLY_BOUND_SATS = 2_100_000_000_000_000
+
+# Section 7: the sigmastate-v1 verifier profile (the composed-vault /
+# pre-committed-txid parser lane). The PROFILE layer is separate from the
+# grammar verdict; verify.py retranscribes these bounds as its own literals.
+PROFILE_SIGMASTATE_V1 = dict(
+    name="sigmastate-v1",
+    min_inputs=1,
+    max_inputs=2,
+    min_outputs=1,
+    max_outputs=4,
+    compactsize_single_byte=True,
+    stripped_only=True,
 )
 
 # --- Deployment constants (this fixture set's deal context). ---
