@@ -1,6 +1,17 @@
-# Settlement Marker Grammar — DRAFT v3 (pending lifecycle checkpoint)
+# Settlement Marker Grammar — DRAFT v4 (pending lifecycle checkpoint)
 
 Status: DRAFT — NOT FROZEN. Freeze is gated on kushti's lifecycle confirmation.
+Revision: v4, 2026-07-12 — integration pass against the composed-vault ABI
+and the sigmastate-v1 parser profile: (1) the payment predicate now commits
+SHA256(scriptPubKey), never the raw script, with hardened value/script
+guards (Section 3 rule 7); (2) a concrete verifier profile section added
+(Section 7): the abstract grammar verdict and the profile verdict are
+separate layers, P6 and the abstract at-capacity N15 member are
+abstract-only, and the sigmastate-v1 scan boundary is exercised at 4 vs 5
+outputs; (3) the operative serialization is pinned as the stripped
+(non-witness) transaction form; (4) the magic value ERGV is adopted (Section
+1 rationale updated), final at freeze. This file is LF-normalized; the
+generator's hash gate hashes LF-only bytes and rejects any CR byte.
 Revision: v3, 2026-07-11 — second external adversarial pass on v2 found two
 defects in v2's own fixes: (1) a logical contradiction in the truncation rule
 (claiming without physically present magic bytes is impossible); (2) PUSHDATA4
@@ -30,7 +41,13 @@ scriptPubKey (45 bytes total):
   <43-byte payload>
 ```
 
-As framed inside the serialized transaction (the parser walks this form):
+As framed inside the STRIPPED (non-witness) transaction serialization — the
+txid preimage (the parser walks this form). Transactions whose payments use
+SegWit outputs remain fully verifiable in this form; it is the full BIP144
+witness serialization (marker 0x00 + nonzero flag after the version) that a
+parser MUST reject as unsupported rather than misparse. The correct term for
+this constraint is "stripped/non-witness serialization only," not
+"legacy-only":
 
 ```
 TxOut:
@@ -77,12 +94,12 @@ Field rationale:
 - **magic "ERGV"**: 4-byte ASCII follows the dominant convention (Omni's
   "omni"). No ERGx variant appears in the known OP_RETURN identifier surveys,
   so within the family the choice is taste plus one governance point.
-  Candidates: ERGV (vault — what the payload names; recommended), ERGO (most
-  readable and brand-aligned, but claiming the bare ecosystem name for one
-  marker protocol is a namespace grab that should be kushti's call), ERGB,
-  ERGS, ERGM, ERGX. [NEEDS CONFIRMATION: final magic value at freeze —
-  technically equivalent, kushti/Shannon taste; ERGO specifically requires
-  kushti's sign-off as a brand-word claim.]
+  ADOPTED (v4): ERGV — vault, what the payload names. Protocol-specific by
+  design: it deliberately avoids claiming the bare ecosystem name (ERGO)
+  for one marker protocol, which would be a brand-word namespace grab
+  requiring the design authority's sign-off. Both implementation-side
+  reviews concur on ERGV. The value becomes final at freeze together with
+  the rest of this document; a later change is a protocol revision.
   What the magic does and does not provide: it makes ACCIDENTAL collision
   unlikely (survey evidence, Section 5); it does NOT prevent INTENTIONAL
   collision — anyone can construct an ERGV OP_RETURN. That is acceptable
@@ -179,12 +196,28 @@ A settlement transaction is VALID with respect to the marker iff:
 6. vout, decoded as unsigned uint32: vout < outputCount, vout !=
    markerOutputIndex, and outputCount was itself fully and successfully
    parsed from the transaction.
-7. The output at index vout — outputs[vout] SPECIFICALLY — pays the committed
-   buyer script AT LEAST the committed amount (value >= committedSats,
-   matching the adopted pays-at-least predicate). The verifier MUST apply the
-   payment predicate to outputs[vout] and MUST NOT fall back to searching any
-   output for a match: "vout in range AND some output matches" is exactly the
-   anyOutputMatches behavior this marker exists to eliminate.
+7. The output at index vout — outputs[vout] SPECIFICALLY — satisfies the
+   committed-payment predicate in the composed-vault ABI form. The deal
+   commits committedScriptHash = SHA256(buyer scriptPubKey) — a single
+   SHA-256 over the raw scriptPubKey bytes exactly as they appear inside
+   the output, with NO CompactSize length prefix, NO byte reversal, and NO
+   second hash — never the raw script itself (register R4 in the vault
+   contract, R5 in the pre-committed-txid parser). Where the hash is
+   carried as text (fixtures, manifests), it is exactly 64 lowercase
+   hexadecimal characters representing the 32 raw bytes, decoded to bytes
+   before comparison. The predicate is:
+     SHA256(outputs[vout].scriptPubKey) == committedScriptHash
+     AND outputs[vout].value >= committedSats
+   with ALL of the following hardened guards required, in integer
+   arithmetic (never floating point):
+   - outputs[vout].scriptPubKey is non-empty;
+   - 0 < committedSats <= 2,100,000,000,000,000 satoshi (21e14, the 21M BTC
+     supply bound);
+   - outputs[vout].value <= 2,100,000,000,000,000 satoshi;
+   - the predicate is applied to outputs[vout] and MUST NOT fall back to
+     searching any output for a match: "vout in range AND some output
+     matches" is exactly the anyOutputMatches behavior this marker exists
+     to eliminate.
 
 Zero claimants: the transaction is simply not a settlement in our namespace —
 it cannot settle any deal. Two or more claimants, or one non-canonical
@@ -204,7 +237,9 @@ Positives:
   qualifies
 - P6 vout = 256 encoded 00 01 00 00, transaction with 257+ outputs, within
   scan capacity (valid; if capacity is lower this becomes an N15 rejection,
-  which is a scan-capacity result, not an encoding error)
+  which is a scan-capacity result, not an encoding error). ABSTRACT-ONLY: P6
+  is a wire-format positive for the grammar layer; under the sigmastate-v1
+  profile (Section 7) it is out of profile and rejected.
 
 Claimant-count and encoding negatives:
 - N1 zero claimants (payment present, no marker)
@@ -249,9 +284,22 @@ Indexed-payment negatives (rule 7):
   wrong script
 
 Scan-bound negatives (rule 1):
-- N15 second claimant at the LAST output of a many-output transaction;
-  outputCount at the verifier's scan capacity (accepted) and capacity+1
-  (rejected)
+- N15 scan-bound family, two layers. Abstract layer (capacity is
+  verifier-parametric): second claimant at the LAST output of a many-output
+  transaction within capacity (MALFORMED — the complete scan finds both);
+  outputCount at the assumed capacity with a single claimant (grammar
+  verdict VALID; ABSTRACT-ONLY under the sigmastate-v1 profile);
+  outputCount at capacity+1, otherwise valid (grammar verdict remains
+  VALID — rejection by a bounded verifier is a scan-capacity result, never
+  a grammar verdict). Profile layer (sigmastate-v1, Section 7): N15d,
+  outputCount == 4 with a single claimant and qualifying payment (in
+  profile, VALID); N15e, defined as N15d plus exactly one APPENDED
+  unrelated non-claiming output — preserving the original inputs, marker
+  index, named payment output, vout, all scripts and values, and every
+  other profile condition — so that outputCount == 5 is the ONLY changed
+  property (out of profile; its abstract grammar verdict remains VALID).
+  N15d/N15e are the concrete 4-vs-5 boundary the deployed parser must
+  exhibit.
 
 ## 5. Collision and standardness analysis
 
@@ -297,3 +345,41 @@ Scan-bound negatives (rule 1):
   transaction can name at most ONE originating vault. The transaction may
   still contain unrelated outputs and payments (see P2, P3); it is not
   exclusively devoted to the settlement.
+
+## 7. SigmaState v1 verifier profile
+
+The grammar above defines protocol truth. A deployed verifier is a concrete,
+deliberately bounded parser; its eligibility is a second, separate layer. A
+fixture or transaction therefore carries two verdicts:
+
+- the ABSTRACT GRAMMAR VERDICT (Sections 2–3): VALID / MALFORMED /
+  NOT-A-SETTLEMENT, independent of any implementation bound;
+- the PROFILE VERDICT for a named profile: equal to the grammar verdict if
+  the transaction is IN PROFILE, else REJECT-OUT-OF-PROFILE. Rejecting out
+  of profile is fail-closed and always safe; it is never a grammar result.
+
+A transaction is IN PROFILE for "sigmastate-v1" (the composed-vault /
+pre-committed-txid parser lane) iff ALL hold:
+
+1. Stripped (non-witness) serialization only, per Section 1. The full
+   BIP144 witness form MUST be rejected, not misparsed.
+2. inputCount in {1, 2} (minimum 1, maximum 2).
+3. outputCount in {1, 2, 3, 4} (minimum 1; scan capacity 4 — the full-scan
+   obligation of Section 3 rule 1 is satisfied by scanning at most 4
+   outputs).
+4. Every CompactSize field in the transaction is single-byte (< 0xfd).
+
+Note on vout: the payload's vout value is NOT a profile constraint. Within
+an in-profile transaction, Section 3 rule 6 requires vout < outputCount;
+therefore any vout >= 4 in an in-profile transaction is necessarily
+MALFORMED under rule 6, not independently out of profile.
+
+When a transaction violates multiple profile constraints, implementations
+and fixtures record ALL violated constraints as an ordered list in the
+fixed order of items 1–4 above (deterministic across implementations).
+
+Fixtures P6 and the abstract at-capacity N15 member are ABSTRACT-ONLY under
+this profile. The profile's own boundary is exercised at outputCount 4
+(accept) vs 5 (reject) by N15d/N15e. Future profiles (wider parsers, other
+platforms) add their own constraint lists here without touching the grammar
+layer.
