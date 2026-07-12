@@ -61,11 +61,14 @@ _HEX_LOWER = "0123456789abcdef"     # Section 3 rule 7: lowercase charset only
 
 # Section 7 profile bounds for "sigmastate-v1". Own literals, retranscribed
 # from the document; NOT imported from grammar.PROFILE_SIGMASTATE_V1.
+# generate.py cross-checks every one of these against grammar.py at each run.
 _PROFILE_NAME = "sigmastate-v1"
+_PROFILE_STRIPPED_ONLY = True       # Section 7 item 1: stripped/non-witness only
 _PROFILE_MIN_INPUTS = 1             # Section 7 item 2: inputCount in {1, 2}
 _PROFILE_MAX_INPUTS = 2             # Section 7 item 2
 _PROFILE_MIN_OUTPUTS = 1            # Section 7 item 3: outputCount in {1..4}
 _PROFILE_MAX_OUTPUTS = 4            # Section 7 item 3: scan capacity 4
+_PROFILE_COMPACTSIZE_SINGLE_BYTE = True   # Section 7 item 4: every field < 0xfd
 _PROFILE_COMPACTSIZE_MAX = 0xFD     # Section 7 item 4: single-byte, i.e. < 0xfd
 
 # Section 7 profile constraint item numbers (the fixed order for the
@@ -328,7 +331,7 @@ def classify_profile(raw_tx: bytes) -> tuple:
     violations = []
 
     # Item 1: stripped (non-witness) serialization only.
-    if shape["is_witness"]:
+    if _PROFILE_STRIPPED_ONLY and shape["is_witness"]:
         violations.append(_PROFILE_ITEM_STRIPPED)
 
     # Item 2: inputCount in {1, 2}.
@@ -341,7 +344,7 @@ def classify_profile(raw_tx: bytes) -> tuple:
         violations.append(_PROFILE_ITEM_OUTPUTS)
 
     # Item 4: every CompactSize field single-byte (< 0xfd).
-    if shape["multibyte_compactsize"]:
+    if _PROFILE_COMPACTSIZE_SINGLE_BYTE and shape["multibyte_compactsize"]:
         violations.append(_PROFILE_ITEM_COMPACTSIZE)
 
     return (len(violations) == 0, violations)

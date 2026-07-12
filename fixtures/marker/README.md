@@ -74,6 +74,10 @@ one cannot mask itself in the other:
   carries its own from-scratch stripped-form parser, plus a separate tolerant
   shape scanner for the profile layer. The retranscription is intentional
   redundancy: if grammar.py and verify.py ever disagree, a self-test fails.
+  That claim is **enforced**, not merely asserted: generate.py cross-checks the
+  two transcriptions on every run, so a disagreement in `SUPPLY_BOUND_SATS` or
+  in any `PROFILE_SIGMASTATE_V1` bound is a build failure — the same check
+  verify.py's self-test already applies to `REASON_CODES`.
 
 families.py bridges the two (builds with grammar.py + txkit.py, expects
 verify.py's outcome); generate.py replays the oracle over every case and refuses

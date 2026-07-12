@@ -4,17 +4,19 @@ Order of operations (aborts loudly on any failure):
   1. GATE on the grammar doc: reject any CR byte, then hash the exact LF-only
      bytes and compare to the pin.
   2. Run txkit / grammar / verify self-tests in-process.
-  3. Build all cases from families.CASES.
-  4. Replay the oracle over every case; computed verdict/reason/labels must
+  3. TRANSCRIPTION CROSS-CHECK: grammar.py and verify.py transcribe the shared
+     normative constants independently; compare the two copies.
+  4. Build all cases from families.CASES.
+  5. Replay the oracle over every case; computed verdict/reason/labels must
      equal the declared expectation. Derive claimant indices from labels.
      Compute the Section 7 profile layer for every case, and assert it where
      the case declares an expectation (N15d/N15e).
-  5. Coverage: emitted case-id set == the required list, exactly.
-  6. Determinism: build the full artifact set twice; byte-identical.
-  7. Emit atomically (hex vectors, manifest.json, SUMMARY.md). Atomicity is
+  6. Coverage: emitted case-id set == the required list, exactly.
+  7. Determinism: build the full artifact set twice; byte-identical.
+  8. Emit atomically (hex vectors, manifest.json, SUMMARY.md). Atomicity is
      PER FILE (temp + os.replace), not set-wide.
-  8. Stale-file hygiene: delete any .hex not in the case set, reporting each.
-  9. Print a run report.
+  9. Stale-file hygiene: delete any .hex not in the case set, reporting each.
+ 10. Print a run report.
 
 TWO VERDICT LAYERS (Section 7). Every vector carries the ABSTRACT GRAMMAR
 VERDICT (Sections 2-3, no implementation bound) and, separately, a PROFILE
@@ -44,6 +46,13 @@ HEX_DIR = VECTORS_DIR / "hex"
 
 PROFILE_NAME = verify._PROFILE_NAME          # "sigmastate-v1" (Section 7)
 REJECT_OUT_OF_PROFILE = "REJECT-OUT-OF-PROFILE"
+
+# Grammar-logical names that must NEVER appear in verify.py's namespace. The
+# oracle imports a bookkeeping-only whitelist from grammar.py and retranscribes
+# everything else from the document; if one of these shows up, that import line
+# has grown a value it should be transcribing, and the cross-check that compares
+# the two transcriptions would be comparing a value against itself.
+FORBIDDEN_VERIFY_IMPORTS = ("SUPPLY_BOUND_SATS", "PROFILE_SIGMASTATE_V1")
 
 SEMANTICS_NOTE = (
     "membership and encoding are orthogonal axes; an output can be "
@@ -103,6 +112,69 @@ def gate_grammar_doc():
             "regenerating"
         )
     return digest
+
+
+def cross_check_transcriptions():
+    """TRANSCRIPTION CROSS-CHECK: grammar.py vs verify.py, at every run.
+
+    The two modules transcribe the same normative constants from
+    marker-grammar-DRAFT.md independently and must not import each other's
+    values. That redundancy buys nothing unless something actually COMPARES the
+    two copies: without a comparison, a divergence just yields two internally
+    self-consistent halves and the build stays green. verify.self_test already
+    cross-checks its own REASON_CODES copy against grammar.REASON_CODES; this
+    applies the same discipline to the rest of the shared surface — the Section
+    3 rule 7 supply bound, and every field of the Section 7 profile.
+
+    A disagreement here is a BUILD FAILURE, not a warning.
+    """
+    # The cross-check is only meaningful while the copies are independent: if
+    # verify.py ever IMPORTS one of these instead of retranscribing it, the
+    # comparisons below degrade into tautologies. Catch that first.
+    leaked = [n for n in FORBIDDEN_VERIFY_IMPORTS if hasattr(verify, n)]
+    if leaked:
+        _fail(
+            "TRANSCRIPTION CROSS-CHECK: verify.py imports "
+            + ", ".join(leaked)
+            + " from grammar.py; these must be retranscribed, not imported"
+        )
+    if "verify" in vars(grammar):
+        _fail("TRANSCRIPTION CROSS-CHECK: grammar.py imports verify.py")
+
+    # Section 3 rule 7: the supply bound.
+    if grammar.SUPPLY_BOUND_SATS != verify._SUPPLY_BOUND_SATS:
+        _fail(
+            "TRANSCRIPTION CROSS-CHECK: SUPPLY_BOUND_SATS disagrees — "
+            f"grammar {grammar.SUPPLY_BOUND_SATS} != "
+            f"verify {verify._SUPPLY_BOUND_SATS}"
+        )
+
+    # Section 7: every field of the profile, against verify.py's own literal for
+    # that field. The KEY SETS are compared first, so a field added to one side
+    # only cannot slip past the value loop unchecked.
+    verify_profile = {
+        "name": verify._PROFILE_NAME,
+        "min_inputs": verify._PROFILE_MIN_INPUTS,
+        "max_inputs": verify._PROFILE_MAX_INPUTS,
+        "min_outputs": verify._PROFILE_MIN_OUTPUTS,
+        "max_outputs": verify._PROFILE_MAX_OUTPUTS,
+        "compactsize_single_byte": verify._PROFILE_COMPACTSIZE_SINGLE_BYTE,
+        "stripped_only": verify._PROFILE_STRIPPED_ONLY,
+    }
+    grammar_profile = grammar.PROFILE_SIGMASTATE_V1
+    if set(grammar_profile) != set(verify_profile):
+        _fail(
+            "TRANSCRIPTION CROSS-CHECK: PROFILE_SIGMASTATE_V1 field set "
+            f"disagrees — grammar {sorted(grammar_profile)} != "
+            f"verify {sorted(verify_profile)}"
+        )
+    for field in sorted(grammar_profile):
+        g_val, v_val = grammar_profile[field], verify_profile[field]
+        if g_val != v_val:
+            _fail(
+                "TRANSCRIPTION CROSS-CHECK: PROFILE_SIGMASTATE_V1"
+                f"[{field!r}] disagrees — grammar {g_val!r} != verify {v_val!r}"
+            )
 
 
 def _claimants_from_labels(labels):
@@ -228,8 +300,8 @@ def build_artifacts(doc_sha):
                 "max_inputs": verify._PROFILE_MAX_INPUTS,
                 "min_outputs": verify._PROFILE_MIN_OUTPUTS,
                 "max_outputs": verify._PROFILE_MAX_OUTPUTS,
-                "compactsize_single_byte": True,
-                "stripped_only": True,
+                "compactsize_single_byte": verify._PROFILE_COMPACTSIZE_SINGLE_BYTE,
+                "stripped_only": verify._PROFILE_STRIPPED_ONLY,
                 "constraint_items": {
                     "1": "stripped (non-witness) serialization only",
                     "2": "inputCount in {1, 2}",
@@ -314,30 +386,33 @@ def main():
     grammar.self_test()
     verify.self_test()
 
-    # 3-5. Build + verify + coverage (verify_case runs inside build_artifacts).
+    # 3. TRANSCRIPTION CROSS-CHECK: the two independent copies must agree.
+    cross_check_transcriptions()
+
+    # 4-6. Build + verify + coverage (verify_case runs inside build_artifacts).
     if set(families.CASES) != set(families.REQUIRED_CASES):
         _fail("coverage: emitted case set != required list")
     hex_map, manifest_text, summary_text = build_artifacts(doc_sha)
     assert set(hex_map) == set(families.REQUIRED_CASES)
 
-    # 6. Determinism: second independent build must be byte-identical.
+    # 7. Determinism: second independent build must be byte-identical.
     hex_map2, manifest_text2, summary_text2 = build_artifacts(doc_sha)
     if (hex_map, manifest_text, summary_text) != (
         hex_map2, manifest_text2, summary_text2
     ):
         _fail("determinism: second build differs from the first")
 
-    # 7. Emit atomically (per file).
+    # 8. Emit atomically (per file).
     HEX_DIR.mkdir(parents=True, exist_ok=True)
     for cid, text in hex_map.items():
         _atomic_write(HEX_DIR / f"{cid}.hex", text)
     _atomic_write(VECTORS_DIR / "manifest.json", manifest_text)
     _atomic_write(VECTORS_DIR / "SUMMARY.md", summary_text)
 
-    # 8. Stale-file hygiene, AFTER a fully successful generate+validate.
+    # 9. Stale-file hygiene, AFTER a fully successful generate+validate.
     deleted = prune_stale_vectors(set(hex_map))
 
-    # 9. Run report.
+    # 10. Run report.
     per_family = {}
     for cid in families.REQUIRED_CASES:
         fam = families.CASES[cid].family
@@ -365,8 +440,8 @@ def main():
     else:
         print("  stale vectors deleted: none")
 
-    print("ALL GREEN: self-tests, oracle agreement, profile layer, coverage, "
-          "determinism, emit.")
+    print("ALL GREEN: self-tests, transcription cross-check, oracle agreement, "
+          "profile layer, coverage, determinism, emit.")
 
 
 if __name__ == "__main__":
