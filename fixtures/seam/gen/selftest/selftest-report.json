@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "artifact_sha256": {
+      "control-plain": "a2cbe0a3583cd059cf53af2c7174c5da88fe1249deac597222ae8346ff30b2fb",
+      "probe-magic": "6e0b6bf5f23c3a4b3b2e9bf97afba7010f29ba1474f91adcfd3f4be508021414"
+    },
+    "oracle_verdict": "GREEN",
+    "run": "full 0.3 pipeline into a temporary directory"
+  },
+  "command": "python3 fixtures/seam/gen/self_test_defect.py",
+  "detection": {
+    "oracle_verdict": "REJECTED",
+    "rejection_verbatim": "probe-magic: bytes at declared offset 4 are '44524756', not the magic '45524756'"
+  },
+  "exit_code": 0,
+  "python_version": "3.12.3",
+  "seeded_defect": {
+    "file": "probe-magic.json",
+    "mutation": "XOR 0x01 on the first byte of the declared magic window",
+    "new_byte_hex": "44",
+    "old_byte_hex": "45",
+    "stage_byte_offset": 4
+  },
+  "started_utc": "2026-07-14T14:20:55Z",
+  "task": "0.4 oracle seeded-defect self-test",
+  "tree_untouched": {
+    "committed_files_hashed": 11,
+    "verdict": "byte-identical before and after"
+  }
+}

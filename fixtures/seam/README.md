@@ -54,6 +54,21 @@ their roles are SPEC Section 0.
    point at the new oracle report and hashes) and close the PINS.md
    entry with commands, exit statuses, and the resulting HEAD.
 
+## Self-test invocation (standing control, task 0.4)
+
+The oracle's detection power is itself a claim, and the seeded-defect
+self-test is what checks it: a temporary pipeline run is deliberately
+corrupted at one byte and the oracle must reject it, or the self-test
+exits 1. Run it alongside the acceptance script — two commands, both
+green, before any merge to main:
+
+    python3 fixtures/seam/gen/check_scaffolding.py
+    python3 fixtures/seam/gen/self_test_defect.py
+
+Evidence of the latest green run lives at
+fixtures/seam/gen/selftest/selftest-report.json. Committed vectors are
+never touched by either command.
+
 ## Worked example: hypothetical grammar-doc pin move
 
 Suppose marker-grammar-DRAFT.md changes (say the payload magic is
