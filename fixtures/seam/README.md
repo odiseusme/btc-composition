@@ -36,6 +36,10 @@ their roles are SPEC Section 0.
    set of records whose manifest carries the moved pin's OLD value,
    plus the gate constants that transcribe that pin (the doc-hash gate
    in the generator and oracle). Nothing outside that set is touched.
+   This pin-scan selects for DOCUMENT pin movements only: the 7.1
+   freeze re-pins the gate constants themselves, which are inputs to
+   every artifact, so the freeze regenerates the full inventory by its
+   own procedure rather than by a scan that would select everything.
 
 4. UPDATE the transcribed constants (expected hash in the gate,
    expected values in PINS.md) in one commit, so the ledger and the

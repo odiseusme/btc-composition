@@ -126,7 +126,11 @@ _CONTROL_NOTE = (
     "no magic in its bytes, no pin hash in its manifest stub. Flipping the "
     "magic constant must leave this file byte-identical; without that, the "
     "regeneration test cannot tell a working rebuild from one that rewrites "
-    "everything."
+    "everything. This record is the invariant for MAGIC flips specifically: "
+    "the 0.2 pin-scan derives invalidation sets for document pin movements, "
+    "and the 7.1 freeze re-pins the gate constants themselves, which are "
+    "inputs to every artifact, so the freeze regenerates the full inventory by "
+    "its own procedure, outside pin-scan selection."
 )
 
 
