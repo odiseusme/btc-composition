@@ -5,15 +5,29 @@
 Exit 0 only if EVERY check passes. One PASS/FAIL line per check:
 
   (a) every module imports cleanly
-  (b) generate then verify round-trips both scaffolding artifacts
-  (c) byte level: no emitted file contains a CR byte
+  (b) the COMMITTED vectors are what this generator produces, and the oracle
+      accepts them: hash the committed files, rebuild the whole pipeline into a
+      temporary directory, byte-compare, then verify the committed bytes
+  (c) byte level: no COMMITTED file contains a CR byte
   (d) the transcription cross-check is green
   (e) forbidden-import check, by AST: the oracle imports nothing from the
-      adapters or the generator; the adapters import nothing from the oracle;
-      and no adapter calls another stage's adapter
-  (f) grep: every banned identifier is absent from fixtures/seam/gen/
+      adapters or the generator and reaches the constants module through one
+      whitelisted import and no other path; the adapters import nothing from
+      the oracle; and no function anywhere under gen/ composes stages unless it
+      is on the composition allowlist
+  (f) banned identifiers: the raw text, and every identifier in every file,
+      normalized
   (g) adapter externality: each stage's input is constructed from serialized
       data in this test and yields the same output
+  (h) the working tree is bit-identical to how this run found it
+
+WHAT THIS SCRIPT MUST NEVER DO IS WRITE TO vectors/. Acceptance that regenerates
+in place attests the bytes it has just written: a committed vector that no
+longer matches its generator would pass forever, and the one claim the seam
+package rests on — these committed bytes are these sources' output — would be
+the one claim nothing checks. So the committed files are read and hashed FIRST,
+the pipeline is rebuilt into a temporary directory, and the two are compared.
+Check (h) proves the tree came out as it went in.
 
 Checks (e), (f), and (g) are the ownership-neutrality checks (risk R2). They
 are the reason this file exists as a command rather than a habit: "the oracle
@@ -24,9 +38,12 @@ mechanically, on the source, at every run.
 
 import ast
 import contextlib
+import hashlib
 import io
 import json
+import shutil
 import sys
+import tempfile
 import traceback
 from pathlib import Path
 
@@ -34,6 +51,16 @@ GEN_DIR = Path(__file__).resolve().parent
 SEAM_DIR = GEN_DIR.parent
 VECTORS_DIR = SEAM_DIR / "vectors"
 REPO_ROOT = SEAM_DIR.parents[1]
+
+# BYTECODE HYGIENE, BEFORE THE FIRST LANE IMPORT. A stale .pyc survives an edit
+# that changes neither a file's size nor its mtime — flipping the payload magic
+# (task 0.6) is exactly such an edit — and CPython would then check the sources
+# of record against a cached compile of their previous selves. PYTHONDONTWRITEBYTECODE
+# (and -B) only stop CPython WRITING a .pyc; a cache that is already on disk is
+# still LOADED. So the caches are deleted, not merely left unwritten.
+sys.dont_write_bytecode = True
+for _cache in sorted(GEN_DIR.rglob("__pycache__")):
+    shutil.rmtree(_cache, ignore_errors=True)
 
 MODULES = ("constants", "adapters", "generate", "verify")
 
@@ -59,10 +86,88 @@ BANNED_IDENTIFIERS = (
     "".join(("deal_", "pipeline")),
 )
 
+# BANNED STEMS (the AST layer of check (f)). The list above is matched against
+# the raw text, exactly as a reviewer's grep would be — and a grep is defeated by
+# spelling. These stems are matched against every IDENTIFIER instead, normalized
+# to lowercase with underscores stripped, and a stem CONTAINED in a longer name
+# still hits. So the family is closed under spelling: the camelCase form, the
+# SHOUTING form, and a stem buried inside a longer name all land on the same
+# stem, and no future contributor has to have read the list to be stopped by it.
+#
+# Fragment-assembled for the same reason as the list above. Prose is exempt by
+# construction: nothing but identifiers is ever tested against these, which is
+# what lets the comments in this lane say plainly what is banned without any of
+# them becoming the violation.
+BANNED_STEMS = (
+    "".join(("box", "id")),
+    "".join(("deal", "payload")),
+    "".join(("assemble", "deal")),
+    "".join(("deal", "pipeline")),
+    "".join(("txid", "from", "payload")),
+    "".join(("payload", "from", "box")),
+    "".join(("payload", "to", "txid")),
+    "".join(("make", "deal")),
+)
+
 # The four neutral stages. Sourced here as literals, not imported from
 # adapters.py: this file is checking that module, not agreeing with it.
 STAGE_NAMES = ("tx_set", "proof", "header_template", "packaging")
 ADAPTER_FUNCS = {f"{stage}_adapter": stage for stage in STAGE_NAMES}
+
+# The oracle's bookkeeping whitelist: the ONLY names verify.py may take from
+# constants.py, and it must take them in one import and reach that module by no
+# other path. Everything else it checks, it transcribes itself — and a value the
+# oracle imported instead of transcribing turns the cross-check into a
+# comparison of a value with itself.
+ORACLE_CONSTANTS_WHITELIST = frozenset({
+    "STATUS", "EXPECTED_GRAMMAR_SHA256", "EXPECTED_SPEC_SHA256",
+})
+
+# THE COMPOSITION ALLOWLIST (risk R2). A function that calls two or more DISTINCT
+# stage adapters is composing stages — that is orchestration, and construction
+# ORDER for identity-bearing vectors (the box id / payload / txid / proof chain)
+# is exactly what decision 14.5 gates. The entries below are the only places in
+# the lane allowed to compose; each builds one artifact or drives the boundary
+# from literals, and none of them chains identity-bearing steps.
+#
+# TASK 5a.2 OWNS ADDITIONS TO THIS LIST. Until the 14.5 split is recorded, a new
+# file or a new function that composes stages FAILS this check, wherever under
+# gen/ it is written. That failure is the control working, not an obstacle to be
+# routed around by adding a name here.
+COMPOSITION_ALLOWLIST = frozenset({
+    "generate.build_probe",             # the probe: tx_set into packaging
+    "generate.build_control",           # the control: header_template into packaging
+    "generate.build_artifacts",         # the inventory, built from the two above
+    "check_scaffolding.check_adapter_externality",   # check (g), the boundary's own proof
+    # adapters.self_test drives each boundary from literals in the module — the
+    # same job check (g) does one file over — and no adapter can reach it. See
+    # ADAPTERS_COMPOSITION_EXEMPT.
+    "adapters.self_test",
+})
+
+# Inside adapters.py the rule is stricter than the allowlist: an ADAPTER that
+# called another stage's adapter would make the boundary itself an orchestrator,
+# and no entry in the list above may excuse that. The module's own self-test is
+# the single exemption — it is a test, not a boundary, nothing in the module
+# calls it, and it still has to be named in COMPOSITION_ALLOWLIST like any other
+# composer.
+ADAPTERS_COMPOSITION_EXEMPT = frozenset({"self_test"})
+
+
+def _vector_hashes():
+    """sha256 of every file under vectors/, by name."""
+    if not VECTORS_DIR.exists():
+        return {}
+    return {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(VECTORS_DIR.glob("*")) if path.is_file()
+    }
+
+
+# Captured before any check runs: the COMMITTED bytes, as this run found them.
+# Every artifact check below reads these files, and check (h) proves they are
+# still exactly these files afterwards.
+COMMITTED_HASHES = _vector_hashes()
 
 _results = []
 
@@ -85,6 +190,10 @@ def _source_files():
     )
 
 
+def _python_files():
+    return [p for p in _source_files() if p.suffix == ".py"]
+
+
 # --- (a) imports ------------------------------------------------------------
 
 def check_imports():
@@ -97,33 +206,65 @@ def check_imports():
     return _record(True, f"(a) modules import cleanly: {', '.join(MODULES)}")
 
 
-# --- (b) generate -> verify round-trip --------------------------------------
+# --- (b) the committed vectors, rebuilt and verified ------------------------
 
 def check_round_trip():
+    """The committed bytes are the thing under test, and are never written to.
+
+    Read and hash them first; rebuild the entire pipeline into a temporary
+    directory; byte-compare. A difference means the committed vectors are not
+    this generator's output any more, and that is a FAILURE, not something to
+    fix by overwriting them — which is precisely what regenerating in place
+    would do, silently, before any check could look.
+    """
+    label = "(b) committed vectors rebuild byte-for-byte, and the oracle accepts them"
     import generate
     import verify
 
+    committed = {}
+    for filename in sorted(verify.ARTIFACTS.values()):
+        path = VECTORS_DIR / filename
+        if not path.is_file():
+            return _record(False, label, f"committed artifact missing: {filename}")
+        committed[filename] = path.read_bytes()
+
     buf = io.StringIO()
-    try:
-        with contextlib.redirect_stdout(buf):
-            generate.main()
-    except SystemExit as exc:
-        return _record(False, "(b) generate then verify round-trips both artifacts",
-                       f"generate aborted (exit {exc.code}); see stderr")
-    except Exception:
-        return _record(False, "(b) generate then verify round-trips both artifacts",
-                       traceback.format_exc(limit=2).strip().splitlines()[-1])
+    with tempfile.TemporaryDirectory() as scratch:
+        out_dir = Path(scratch)
+        try:
+            with contextlib.redirect_stdout(buf):
+                generate.run_pipeline(out_dir)
+        except SystemExit as exc:
+            return _record(False, label, f"generate aborted (exit {exc.code}); see stderr")
+        except Exception:
+            return _record(False, label,
+                           traceback.format_exc(limit=2).strip().splitlines()[-1])
+        rebuilt = {p.name: p.read_bytes() for p in sorted(out_dir.glob("*")) if p.is_file()}
+
+    if sorted(rebuilt) != sorted(committed):
+        return _record(False, label,
+                       f"the pipeline emits {sorted(rebuilt)}; the tree holds {sorted(committed)}")
+
+    differing = [name for name in sorted(committed) if rebuilt[name] != committed[name]]
+    if differing:
+        detail = "; ".join(
+            f"{name}: committed {hashlib.sha256(committed[name]).hexdigest()[:16]}… != "
+            f"rebuilt {hashlib.sha256(rebuilt[name]).hexdigest()[:16]}…"
+            for name in differing
+        )
+        return _record(False, label,
+                       "the committed vectors are NOT what this generator produces — "
+                       + detail)
 
     try:
         results = verify.verify_artifacts(VECTORS_DIR)
     except verify.OracleError as exc:
-        return _record(False, "(b) generate then verify round-trips both artifacts", str(exc))
+        return _record(False, label, f"the oracle rejected the COMMITTED bytes: {exc}")
 
     ids = sorted(r["record_id"] for r in results)
     if ids != sorted(verify.ARTIFACTS):
-        return _record(False, "(b) generate then verify round-trips both artifacts",
-                       f"verified {ids}, expected {sorted(verify.ARTIFACTS)}")
-    return _record(True, f"(b) generate then verify round-trips both artifacts: {', '.join(ids)}")
+        return _record(False, label, f"verified {ids}, expected {sorted(verify.ARTIFACTS)}")
+    return _record(True, f"{label}: {', '.join(sorted(committed))}")
 
 
 # --- (c) LF-only, at the byte level -----------------------------------------
@@ -131,13 +272,13 @@ def check_round_trip():
 def check_lf_only():
     files = sorted(p for p in VECTORS_DIR.glob("*") if p.is_file()) if VECTORS_DIR.exists() else []
     if not files:
-        return _record(False, "(c) no emitted file contains a CR byte", "no artifacts found")
+        return _record(False, "(c) no committed file contains a CR byte", "no artifacts found")
     offenders = [p.name for p in files if b"\r" in p.read_bytes()]
     if offenders:
-        return _record(False, "(c) no emitted file contains a CR byte",
+        return _record(False, "(c) no committed file contains a CR byte",
                        f"CR bytes in {', '.join(offenders)}")
     total = sum(p.stat().st_size for p in files)
-    return _record(True, f"(c) no emitted file contains a CR byte: {len(files)} files, {total} bytes")
+    return _record(True, f"(c) no committed file contains a CR byte: {len(files)} files, {total} bytes")
 
 
 # --- (d) transcription cross-check ------------------------------------------
@@ -155,7 +296,7 @@ def check_cross_transcription():
                          "gate pins, ledger agreement")
 
 
-# --- (e) forbidden imports and cross-stage calls, by AST --------------------
+# --- (e) forbidden imports, oracle independence, stage composition (AST) ----
 
 def _imported_modules(tree):
     """Every module name a file imports, top-level package first component."""
@@ -170,26 +311,146 @@ def _imported_modules(tree):
     return names
 
 
-def _cross_stage_calls(tree):
-    """Adapter functions that call another stage's adapter. Must be empty."""
-    offenders = []
+def _oracle_constants_problems(tree):
+    """verify.py reaches constants.py through ONE whitelisted import, or not at all.
+
+    The oracle's independence is not "it mostly transcribes its own literals". It
+    is: there is exactly one import, it binds exactly three bookkeeping names, and
+    no other expression in the file can reach that module. A single
+    `import constants` would hand it every value in there, and a value the oracle
+    imported instead of transcribing makes generate.cross_check_transcriptions()
+    compare a value with itself and call it agreement.
+    """
+    problems = []
+
     for node in ast.walk(tree):
-        if not isinstance(node, ast.FunctionDef) or node.name not in ADAPTER_FUNCS:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name.split(".")[0] == "constants":
+                    problems.append(
+                        f"verify.py does `import constants` (line {node.lineno}): the "
+                        "whitelist binds three names, and the module object binds all of them"
+                    )
+
+    froms = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module == "constants"
+    ]
+    if len(froms) != 1:
+        problems.append(
+            f"verify.py has {len(froms)} `from constants import ...` statements; there is "
+            "exactly one, so that one place states everything the oracle shares"
+        )
+
+    for node in froms:
+        pulled = {alias.name for alias in node.names}
+        if pulled != ORACLE_CONSTANTS_WHITELIST:
+            detail = []
+            extra = sorted(pulled - ORACLE_CONSTANTS_WHITELIST)
+            missing = sorted(ORACLE_CONSTANTS_WHITELIST - pulled)
+            if extra:
+                detail.append(f"imports {extra}")
+            if missing:
+                detail.append(f"does not import {missing}")
+            problems.append(
+                "verify.py " + " and ".join(detail) + " from constants.py; the bookkeeping "
+                f"whitelist is exactly {sorted(ORACLE_CONSTANTS_WHITELIST)} — anything else "
+                "is a value the oracle is supposed to be transcribing itself"
+            )
+        aliased = sorted(alias.asname for alias in node.names if alias.asname)
+        if aliased:
+            problems.append(
+                f"verify.py aliases its constants imports ({aliased}); the whitelisted names "
+                "are imported under their own names, so the whitelist can be read off the line"
+            )
+
+    # Not one expression may name the module. This single rule covers attribute
+    # access (constants.SUPPLY_BOUND_SATS), rebinding it (c = constants), and any
+    # assignment whose right-hand side reads through either.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id == "constants":
+            problems.append(
+                f"verify.py names the constants module in an expression (line {node.lineno}); "
+                "it reaches that module through the whitelisted import and no other path"
+            )
+
+    return problems
+
+
+def _stage_adapter_calls(node):
+    """The distinct stage adapters called anywhere inside an AST node."""
+    called = set()
+    for inner in ast.walk(node):
+        if not isinstance(inner, ast.Call):
             continue
-        for inner in ast.walk(node):
-            if not isinstance(inner, ast.Call):
+        func = inner.func
+        name = func.id if isinstance(func, ast.Name) else getattr(func, "attr", None)
+        if name in ADAPTER_FUNCS:
+            called.add(name)
+    return called
+
+
+def _composition_problems():
+    """Who composes stages, across EVERY .py under gen/, and are they allowed to.
+
+    Scanning only adapters.py's four adapters would have proved that the four
+    functions we already trust do not compose. The rule is about the lane, not
+    about four functions: a new file, a new helper, a self-test that quietly
+    chains stages, all have to fail this, or the ban is a convention again.
+    """
+    problems = []
+
+    for path in sorted(GEN_DIR.rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        module = path.stem
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+
+        scopes = [
+            (f"{module}.{node.name}", node.name, node)
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
+
+        # Module-level code composes too, and a function-only scan would sail
+        # straight past it. Everything outside a def is attributed to <module>,
+        # which is on no allowlist and never will be.
+        scopes.append((f"{module}.<module>", "<module>", ast.Module(
+            body=[
+                node for node in tree.body
+                if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+            ],
+            type_ignores=[],
+        )))
+
+        for qualified, local, node in scopes:
+            called = _stage_adapter_calls(node)
+            if not called:
                 continue
-            func = inner.func
-            called = func.id if isinstance(func, ast.Name) else getattr(func, "attr", None)
-            if called in ADAPTER_FUNCS and called != node.name:
-                offenders.append(f"{node.name} calls {called}")
-    return offenders
+
+            if module == "adapters" and local not in ADAPTERS_COMPOSITION_EXEMPT:
+                others = sorted(called - {local})
+                if others:
+                    problems.append(
+                        f"adapters.py: {local}() calls {', '.join(others)} — no function in "
+                        "the boundary module may call a stage adapter; stages communicate "
+                        "only through serialized data the CALLER passes"
+                    )
+                    continue
+
+            if len(called) >= 2 and qualified not in COMPOSITION_ALLOWLIST:
+                problems.append(
+                    f"{qualified}() composes stages ({', '.join(sorted(called))}) and is not "
+                    "on the composition allowlist; identity-bearing construction order is "
+                    "gated by decision 14.5, and task 5a.2 owns additions to that list"
+                )
+
+    return problems
 
 
 def check_forbidden_imports():
     verify_tree = ast.parse((GEN_DIR / "verify.py").read_text(encoding="utf-8"))
-    adapters_src = (GEN_DIR / "adapters.py").read_text(encoding="utf-8")
-    adapters_tree = ast.parse(adapters_src)
+    adapters_tree = ast.parse((GEN_DIR / "adapters.py").read_text(encoding="utf-8"))
 
     problems = []
 
@@ -200,18 +461,7 @@ def check_forbidden_imports():
             "the generator, not checking it"
         )
 
-    # The oracle's whitelist from constants.py: bookkeeping only. Anything else
-    # is a value it is supposed to be transcribing itself.
-    allowed = {"STATUS", "EXPECTED_GRAMMAR_SHA256", "EXPECTED_SPEC_SHA256"}
-    for node in ast.walk(verify_tree):
-        if isinstance(node, ast.ImportFrom) and node.module == "constants":
-            pulled = {alias.name for alias in node.names}
-            extra = pulled - allowed
-            if extra:
-                problems.append(
-                    f"verify.py imports {sorted(extra)} from constants.py; the "
-                    f"bookkeeping whitelist is {sorted(allowed)}"
-                )
+    problems.extend(_oracle_constants_problems(verify_tree))
 
     leaked = _imported_modules(adapters_tree) & {"verify", "generate", "constants"}
     if leaked:
@@ -220,39 +470,90 @@ def check_forbidden_imports():
             "oracle or the generator would not be a replaceable boundary"
         )
 
-    crossed = _cross_stage_calls(adapters_tree)
-    if crossed:
-        problems.append(
-            "cross-stage calls in adapters.py (" + "; ".join(crossed) + "): stages "
-            "communicate only through serialized data the caller passes"
-        )
+    problems.extend(_composition_problems())
 
     if problems:
-        return _record(False, "(e) forbidden-import / cross-stage-call check (AST)",
+        return _record(False, "(e) forbidden-import / oracle-independence / composition (AST)",
                        "\n        ".join(problems))
-    return _record(True, "(e) forbidden-import / cross-stage-call check (AST): oracle "
-                         "independent, adapters isolated")
+    scanned = len([p for p in _python_files()])
+    return _record(True, "(e) forbidden-import / oracle-independence / composition (AST): "
+                         f"oracle independent, adapters isolated, {scanned} files scanned for "
+                         f"stage composition, {len(COMPOSITION_ALLOWLIST)} composers allowlisted")
 
 
 # --- (f) banned identifiers --------------------------------------------------
 
+def _identifiers(tree):
+    """Every identifier a file binds or reads: defs, names, attributes, arguments."""
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.Name):
+            names.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            names.add(node.attr)
+        elif isinstance(node, ast.arg):
+            names.add(node.arg)
+        elif isinstance(node, ast.keyword) and node.arg:
+            names.add(node.arg)
+        elif isinstance(node, ast.alias):
+            names.add(node.name.split(".")[0])
+            if node.asname:
+                names.add(node.asname)
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            names.add(node.name)
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            names.update(node.names)
+    return names
+
+
+def _normalized(identifier):
+    """lowercase, underscores stripped: one spelling for a family of spellings."""
+    return identifier.replace("_", "").lower()
+
+
 def check_banned_identifiers():
     hits = []
+
+    # Layer 1: the raw text, exactly as a reviewer's grep would read it.
     for path in _source_files():
         try:
             text = path.read_text(encoding="utf-8").lower()
         except UnicodeDecodeError:
             continue
-        for banned in BANNED_IDENTIFIERS:
-            if banned in text:
-                for lineno, line in enumerate(text.splitlines(), 1):
-                    if banned in line:
-                        hits.append(f"{path.relative_to(REPO_ROOT)}:{lineno}: {banned}")
+        for lineno, line in enumerate(text.splitlines(), 1):
+            for banned in BANNED_IDENTIFIERS:
+                if banned in line:
+                    hits.append(f"{path.relative_to(REPO_ROOT)}:{lineno}: text {banned!r}")
+
+    # Layer 2: the AST. A grep for exact names is beaten by spelling — a
+    # camelCase form, a stem buried inside a longer name — and the ban is on the
+    # CONCEPT, not on seven strings. So every identifier is normalized and
+    # tested for a banned stem as a substring. Prose is untouched by this loop
+    # by construction: only identifiers reach it.
+    for path in _python_files():
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except SyntaxError as exc:
+            hits.append(f"{path.relative_to(REPO_ROOT)}: does not parse ({exc})")
+            continue
+        for identifier in sorted(_identifiers(tree)):
+            flat = _normalized(identifier)
+            for stem in BANNED_STEMS:
+                if stem in flat:
+                    hits.append(
+                        f"{path.relative_to(REPO_ROOT)}: identifier {identifier!r} contains "
+                        f"the banned stem {stem!r}"
+                    )
+
     if hits:
         return _record(False, "(f) banned identifiers absent from fixtures/seam/gen/",
                        "\n        ".join(hits))
-    return _record(True, f"(f) banned identifiers absent from fixtures/seam/gen/: "
-                         f"{len(BANNED_IDENTIFIERS)} names, {len(_source_files())} files")
+    return _record(True, "(f) banned identifiers absent from fixtures/seam/gen/: "
+                         f"{len(BANNED_IDENTIFIERS)} names over {len(_source_files())} files, "
+                         f"{len(BANNED_STEMS)} stems over every identifier in "
+                         f"{len(_python_files())} modules")
 
 
 # --- (g) adapter externality -------------------------------------------------
@@ -266,8 +567,8 @@ def check_adapter_externality():
     """Each stage's input is built from serialized data HERE, in this test.
 
     Nothing below is imported from the generator: no constant, no helper, no
-    intermediate object. Every input is a literal or is read back out of an
-    emitted artifact. If a stage could only be driven by the generator's own
+    intermediate object. Every input is a literal or is read back out of a
+    COMMITTED artifact. If a stage could only be driven by the generator's own
     in-memory objects, this test could not exist — which is exactly what makes
     it the boundary's proof.
     """
@@ -317,7 +618,7 @@ def check_adapter_externality():
             problems.append(f"{stage}: envelope is tagged {direct.get('stage')!r}")
         outputs[stage] = direct
 
-    # 2. The strong form: rebuild the EMITTED artifacts' stages from nothing but
+    # 2. The strong form: rebuild the COMMITTED artifacts' stages from nothing but
     #    the serialized data in the artifacts themselves. This is the externality
     #    claim applied to real output — a stage's input can be supplied from a
     #    file, with no generator in the room.
@@ -325,7 +626,7 @@ def check_adapter_externality():
         probe = json.loads((VECTORS_DIR / "probe-magic.json").read_text(encoding="utf-8"))
         control = json.loads((VECTORS_DIR / "control-plain.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        problems.append(f"could not read the emitted artifacts ({exc})")
+        problems.append(f"could not read the committed artifacts ({exc})")
         probe = control = None
 
     if probe is not None:
@@ -360,7 +661,36 @@ def check_adapter_externality():
         return _record(False, "(g) adapter externality: every stage driven from serialized data",
                        "\n        ".join(problems))
     return _record(True, "(g) adapter externality: every stage driven from serialized data "
-                         f"({', '.join(STAGE_NAMES)}); emitted stages rebuilt from their own bytes")
+                         f"({', '.join(STAGE_NAMES)}); committed stages rebuilt from their own bytes")
+
+
+# --- (h) the working tree is as this run found it ---------------------------
+
+def check_tree_untouched():
+    """Acceptance observes; it does not write. This is the proof, not the promise.
+
+    Every artifact check above ran against the committed bytes, and that is only
+    worth anything if the committed bytes were never touched. Hashed before the
+    first check, hashed again after the last: a rewritten file, a new file, a
+    leftover .tmp from a half-finished emit all show up here.
+    """
+    label = "(h) working tree untouched: fixtures/seam/vectors byte-identical before and after"
+    after = _vector_hashes()
+    if after == COMMITTED_HASHES:
+        return _record(True, f"{label} ({len(after)} files)")
+
+    problems = []
+    for name in sorted(set(COMMITTED_HASHES) | set(after)):
+        before, now = COMMITTED_HASHES.get(name), after.get(name)
+        if before == now:
+            continue
+        if before is None:
+            problems.append(f"{name}: created by this check run")
+        elif now is None:
+            problems.append(f"{name}: removed by this check run")
+        else:
+            problems.append(f"{name}: rewritten ({before[:16]}… -> {now[:16]}…)")
+    return _record(False, label, "\n        ".join(problems))
 
 
 CHECKS = (
@@ -371,6 +701,7 @@ CHECKS = (
     ("e", check_forbidden_imports),
     ("f", check_banned_identifiers),
     ("g", check_adapter_externality),
+    ("h", check_tree_untouched),
 )
 
 
