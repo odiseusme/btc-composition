@@ -14,7 +14,15 @@ Order of operations (aborts loudly on any failure):
   4. Build the two scaffolding artifacts through the adapter boundaries.
   5. Replay the ORACLE over what was built, in memory, before writing.
   6. Determinism: build the full set twice; byte-identical.
-  7. Emit atomically, per file, LF-only.
+  7. Emit LF-only into a CALLER-SUPPLIED directory: stage every temp file
+     first, then replace them all.
+
+Steps 1 to 7 are run_pipeline(out_dir). The output directory is a parameter so
+that a caller can drive the whole pipeline into a scratch directory and compare
+what it produces against the committed vectors WITHOUT overwriting them first;
+main() passes the committed vectors/ and is what production regeneration (0.6)
+calls, and check_scaffolding.py passes a temporary directory so that acceptance
+attests the committed bytes rather than bytes it just wrote itself.
 
 THE MAGIC LIVES HERE, IN ONE PLACE (_MAGIC below): this is the only
 construction-side copy in the lane, and constants.py deliberately does not
@@ -88,6 +96,21 @@ _CONTROL_TEMPLATE = bytes(8)
 # comparisons of a value with itself.
 FORBIDDEN_VERIFY_IMPORTS = ("SUPPLY_BOUND_SATS", "PRODUCER_PR_HEAD", "CONSUMER_PR_HEAD")
 
+# The ledger's EXPECTED-pin section, and the label each gate constant must be
+# declared under. The section is parsed; the file is never searched as a whole.
+# The check log below that section records the ACTUAL values seen at each check,
+# including every value that has since MOVED, so a substring search over the
+# whole document is satisfied by a stale digest sitting in the history — which is
+# precisely the one-sided edit (gate moved, expected pins not) that this check
+# exists to catch.
+_LEDGER_PIN_HEADING = "## Expected pins"
+_LEDGER_PIN_LABELS = (
+    ("EXPECTED_GRAMMAR_SHA256", "grammar doc sha256"),
+    ("EXPECTED_SPEC_SHA256", "spec pre-freeze sha256"),
+    ("PRODUCER_PR_HEAD", "producer pr head"),
+    ("CONSUMER_PR_HEAD", "consumer pr head"),
+)
+
 _PROBE_NOTE = (
     "Scaffolding probe (task 0.3). Magic-DEPENDENT target for the 0.6 "
     "regeneration test: its bytes embed the 4-byte payload magic at "
@@ -150,6 +173,50 @@ def gate_docs():
     return grammar_sha, spec_sha
 
 
+def _ledger_expected_pins():
+    """Parse PINS.md's expected-pin section into [(label, value), ...].
+
+    The section is a bullet list, and a bullet's value may continue on the
+    indented lines under it — the 64-hex digests are wrapped that way. Each
+    bullet yields its label (lowercased, everything before the first colon) and
+    its value (the first whitespace-delimited token after that colon), so a
+    trailing parenthetical like the SPEC's PRE-FREEZE marker is not mistaken for
+    part of the digest.
+    """
+    if not PINS_LEDGER.exists():
+        _fail(f"PIN LEDGER: {PINS_LEDGER} is missing")
+
+    lines = PINS_LEDGER.read_text(encoding="utf-8").splitlines()
+    start = next(
+        (i for i, line in enumerate(lines) if line.startswith(_LEDGER_PIN_HEADING)), None
+    )
+    if start is None:
+        _fail(
+            f"PIN LEDGER: {PINS_LEDGER.name} has no '{_LEDGER_PIN_HEADING}' section; "
+            "the expected pins are the only part of the ledger the gate is checked "
+            "against (the check log records actuals, including moved ones)"
+        )
+
+    bullets = []
+    for line in lines[start + 1:]:
+        if line.startswith("## "):
+            break
+        stripped = line.strip()
+        if stripped.startswith("- "):
+            bullets.append([stripped[2:]])
+        elif stripped and bullets:
+            bullets[-1].append(stripped)
+
+    pins = []
+    for bullet in bullets:
+        label, sep, value = " ".join(bullet).partition(":")
+        if not sep:
+            continue
+        tokens = value.split()
+        pins.append((label.strip().lower(), tokens[0] if tokens else ""))
+    return pins
+
+
 def cross_check_transcriptions():
     """The construction side vs. the oracle, at every run.
 
@@ -208,23 +275,33 @@ def cross_check_transcriptions():
         _fail("TRANSCRIPTION CROSS-CHECK: STATUS disagrees")
 
     # THE LEDGER AND THE GATE CANNOT DISAGREE (0.2 step 4). Every pin the gate
-    # enforces must appear verbatim in the committed ledger. Cheap, and it
-    # catches the one-sided edit — gate moved, PINS.md not — that the movement
-    # procedure exists to prevent.
-    if not PINS_LEDGER.exists():
-        _fail(f"PIN LEDGER: {PINS_LEDGER} is missing")
-    ledger = PINS_LEDGER.read_text(encoding="utf-8")
-    for label, pin in (
-        ("EXPECTED_GRAMMAR_SHA256", constants.EXPECTED_GRAMMAR_SHA256),
-        ("EXPECTED_SPEC_SHA256", constants.EXPECTED_SPEC_SHA256),
-        ("PRODUCER_PR_HEAD", constants.PRODUCER_PR_HEAD),
-        ("CONSUMER_PR_HEAD", constants.CONSUMER_PR_HEAD),
-    ):
-        if pin not in ledger:
+    # enforces must be DECLARED, under its own label and exactly once, in the
+    # ledger's expected-pin section. The comparison is against that section
+    # alone: a pin is agreed only where the ledger says what it EXPECTS, never
+    # where it records what some past check happened to see.
+    declared = _ledger_expected_pins()
+    for const_name, label in _LEDGER_PIN_LABELS:
+        expected = getattr(constants, const_name)
+        matches = [value for lab, value in declared if lab.startswith(label)]
+        if not matches:
             _fail(
-                f"PIN LEDGER: {label} ({pin}) is not in PINS.md. The gate and the "
-                "ledger move in the same commit (0.2 step 4) — they may never "
-                "disagree."
+                f"PIN LEDGER: no expected-pin entry labelled '{label}' in the "
+                f"'{_LEDGER_PIN_HEADING}' section of PINS.md; the gate holds "
+                f"{const_name} = {expected}"
+            )
+        if len(matches) > 1:
+            _fail(
+                f"PIN LEDGER: {len(matches)} expected-pin entries labelled "
+                f"'{label}' ({', '.join(matches)}); each pin is declared exactly "
+                "once, or 'the ledger agrees' means whichever copy was read first"
+            )
+        if matches[0] != expected:
+            _fail(
+                f"PIN LEDGER: {const_name} disagrees with the ledger.\n"
+                f"  gate   {expected}\n"
+                f"  ledger {matches[0]}  (expected-pin entry '{label}')\n"
+                "The gate and the ledger move in the same commit (0.2 step 4) — "
+                "they may never disagree."
             )
 
 
@@ -296,19 +373,43 @@ def build_artifacts(grammar_sha, spec_sha):
     }, records
 
 
-def _atomic_write(path: Path, text: str):
-    """Atomic PER FILE (temp + os.replace); the SET is not atomic as a whole.
+def emit(out_dir, texts):
+    """Stage EVERY temp file, then replace them all. Emits into out_dir.
+
+    The atomicity unit is still the PER-FILE os.replace; the set as a whole is
+    not atomic, and no arrangement of ordinary POSIX calls makes it so. What
+    staging every write before the first replace buys is a narrower window: the
+    directory can hold a mix of old and new artifacts only for the duration of
+    the replace loop, not for as long as it takes to serialize the inventory. A
+    build that aborts partway through serialization now leaves the committed set
+    untouched rather than half-rewritten.
 
     newline="\\n" is explicit: no platform translation, LF-only output, matching
     the CR-rejecting document gate and the oracle's byte-level LF check.
     """
-    tmp = path.with_name(path.name + ".tmp")
-    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(text)
-    os.replace(tmp, path)
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    staged = []
+    for filename, text in sorted(texts.items()):
+        target = out_dir / filename
+        tmp = target.with_name(target.name + ".tmp")
+        with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+        staged.append((tmp, target))
+
+    for tmp, target in staged:
+        os.replace(tmp, target)
 
 
-def main():
+def run_pipeline(out_dir):
+    """The whole pipeline, steps 1 to 7, emitting into out_dir.
+
+    Returns (grammar_sha, spec_sha, texts, records). out_dir is a PARAMETER and
+    not the module's VECTORS_DIR constant so that acceptance can rebuild into a
+    scratch directory and byte-compare against the committed vectors instead of
+    overwriting them and then attesting its own output.
+    """
     # 1. GATE on both pinned documents.
     grammar_sha, spec_sha = gate_docs()
 
@@ -339,10 +440,14 @@ def main():
     if texts != texts2:
         _fail("determinism: second build differs from the first")
 
-    # 7. Emit atomically, per file.
-    VECTORS_DIR.mkdir(parents=True, exist_ok=True)
-    for filename, text in sorted(texts.items()):
-        _atomic_write(VECTORS_DIR / filename, text)
+    # 7. Emit.
+    emit(out_dir, texts)
+    return grammar_sha, spec_sha, texts, records
+
+
+def main():
+    """Production regeneration: run the pipeline over the committed vectors."""
+    grammar_sha, spec_sha, texts, records = run_pipeline(VECTORS_DIR)
 
     print(f"Seam scaffolding generation report ({constants.STATUS})")
     print("  grammar_doc_sha256:", grammar_sha)

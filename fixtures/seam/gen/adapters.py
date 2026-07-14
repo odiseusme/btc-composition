@@ -51,6 +51,8 @@ byte-order convention, and no failure category. Those are Phase 1 facts,
 declared per family against the SPEC, and they will arrive as adapter INPUT.
 """
 
+import json
+
 STAGES = ("tx_set", "proof", "header_template", "packaging")
 
 # The adapter's own input-validation rule for byte material: even-length,
@@ -136,6 +138,16 @@ def _require_int(where, value, minimum=0):
 
 def _envelope(stage, serialized):
     return {"stage": stage, "serialized": _require_dict(f"{stage}.serialized", serialized)}
+
+
+def _deep_copy(value):
+    """A copy that shares nothing with the caller's data.
+
+    A JSON round trip is the right copy here rather than an approximation of
+    one: the boundary contract already says the value is JSON-safe, so a value
+    that cannot survive this is a value that had no business crossing.
+    """
+    return json.loads(json.dumps(value))
 
 
 def tx_set_adapter(serialized_input):
@@ -287,6 +299,15 @@ def packaging_adapter(serialized_input):
     one thing the 0.2 procedure needs from day one, because the invalidation
     set of a moved pin is derived mechanically by scanning these fields for
     the pin's old value.
+
+    THE RECORD IS A DEEP COPY of the accepted input, and this is not a detail:
+    the stage envelopes and the manifest stub arrive as the caller's own live
+    dicts, so a record that merely referenced them would keep changing after it
+    was packaged. Anything the caller touched afterwards would silently reach the
+    emitted bytes, the oracle replay, and the determinism comparison — all of
+    which run on the record this function returned. A packaged record is a fact
+    about the moment it was packaged, so nothing outside it may still hold a
+    handle on its parts.
     """
     _require_dict("packaging input", serialized_input)
     _require_keys("packaging input", serialized_input, {
@@ -320,7 +341,7 @@ def packaging_adapter(serialized_input):
         if not isinstance(serialized_input[key], str):
             raise AdapterContractError(f"packaging input.{key}: expected a string")
 
-    return _envelope("packaging", {
+    return _envelope("packaging", _deep_copy({
         "record_id": serialized_input["record_id"],
         "kind": serialized_input["kind"],
         "status": serialized_input["status"],
@@ -328,7 +349,7 @@ def packaging_adapter(serialized_input):
         "declarations": declarations,
         "manifest_stub": manifest_stub,
         "notes": serialized_input["notes"],
-    })
+    }))
 
 
 # The registry is the boundary made enumerable: check_scaffolding.py's
@@ -389,6 +410,24 @@ def self_test() -> None:
     })["serialized"]
     assert [s["stage"] for s in rec["stages"]] == ["header_template", "tx_set"]
     assert rec["declarations"] == {"example_offset": 0}
+
+    # The packaged record shares nothing with the input it was built from: a
+    # caller that keeps mutating its own envelopes and stub after packaging
+    # cannot reach back into the record the oracle and the emitter will read.
+    stub = {"depends_on": [], "pin_hashes": {}}
+    sealed = packaging_adapter({
+        "record_id": "selftest-copy",
+        "kind": "selftest",
+        "status": "PRE-FREEZE",
+        "stages": [a],
+        "declarations": {},
+        "manifest_stub": stub,
+        "notes": "",
+    })["serialized"]
+    a["serialized"]["bytes_hex"] = "ff"
+    stub["pin_hashes"]["late_addition"] = "reached the record"
+    assert sealed["stages"][0]["serialized"]["bytes_hex"] == "00", sealed
+    assert sealed["manifest_stub"]["pin_hashes"] == {}, sealed
 
     # The boundary rejects anything that is not serialized data.
     for bad in (b"\x00", object(), 1.5):

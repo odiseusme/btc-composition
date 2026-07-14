@@ -79,6 +79,23 @@ ARTIFACTS = {
     CONTROL_ID: "control-plain.json",
 }
 
+# The exact shape of a 0.3 record, checked as EXACT SETS, never as "contains".
+# An oracle that ignores a key it does not recognise is an oracle a new key can
+# be smuggled past: the record grows a field, nothing objects, and the artifact
+# now carries a claim nothing checks. A record that grew a key it should not
+# have, or lost one it should, is a record whose shape this oracle was never
+# shown, and that is a failure on its own terms.
+_RECORD_KEYS = {
+    "record_id", "kind", "status", "stages", "declarations", "manifest_stub", "notes",
+}
+_ENVELOPE_KEYS = {"stage", "serialized"}
+
+# One stage per 0.3 record, and which one is not the record's to choose.
+_RECORD_STAGE = {
+    PROBE_ID: "tx_set",
+    CONTROL_ID: "header_template",
+}
+
 # The pinned documents a record's bytes may declare a dependency on, and the
 # manifest-stub field each one's hash is carried in.
 _PIN_FIELDS = {
@@ -94,6 +111,22 @@ class OracleError(AssertionError):
 def _require(condition, message):
     if not condition:
         raise OracleError(message)
+
+
+def _require_int(name, label, value, minimum=0):
+    """A count, an offset, or a length: a real integer, never a bool.
+
+    bool is an int subclass, so True == 1 and False == 0 compare equal to the
+    lengths and offsets this oracle reads. The type is rejected BEFORE any
+    comparison, or a record declaring a length of `true` would authenticate
+    against a one-byte blob.
+    """
+    _require(
+        isinstance(value, int) and not isinstance(value, bool),
+        f"{name}: {label} {value!r} is not an integer",
+    )
+    _require(value >= minimum, f"{name}: {label} {value} < {minimum}")
+    return value
 
 
 def check_supply_bound(value):
@@ -132,15 +165,31 @@ def load_artifact(path):
 
 
 def _stage(name, record, stage_name):
-    """Pull the one envelope for a stage, re-deriving nothing from the generator."""
+    """Pull the record's ONE envelope, re-deriving nothing from the generator.
+
+    A 0.3 record carries exactly one stage, and which stage that is belongs to
+    the record's kind, not to the record. Selecting the matching envelope out of
+    a list and ignoring the rest would let a probe ship a second, unchecked stage
+    alongside its tx_set; the list length is checked instead, and the one
+    envelope in it must be the stage this kind of record is made of.
+    """
     stages = record.get("stages")
-    _require(isinstance(stages, list) and stages, f"{name}: no stages list")
-    matching = [s for s in stages if isinstance(s, dict) and s.get("stage") == stage_name]
+    _require(isinstance(stages, list), f"{name}: stages is not a list")
     _require(
-        len(matching) == 1,
-        f"{name}: expected exactly one {stage_name} stage, found {len(matching)}",
+        len(stages) == 1,
+        f"{name}: expected exactly one stage envelope, found {len(stages)}",
     )
-    serialized = matching[0].get("serialized")
+    envelope = stages[0]
+    _require(isinstance(envelope, dict), f"{name}: the stage envelope is not an object")
+    _require(
+        set(envelope) == _ENVELOPE_KEYS,
+        f"{name}: stage envelope keys {sorted(envelope)} != {sorted(_ENVELOPE_KEYS)}",
+    )
+    _require(
+        envelope["stage"] == stage_name,
+        f"{name}: stage {envelope['stage']!r} != {stage_name!r}",
+    )
+    serialized = envelope["serialized"]
     _require(isinstance(serialized, dict), f"{name}: {stage_name} stage carries no serialized data")
     return serialized
 
@@ -153,7 +202,7 @@ def _decode_bytes(name, serialized, field="bytes_hex"):
         raw = bytes.fromhex(hex_text)
     except ValueError as exc:
         raise OracleError(f"{name}: {field} is not hex ({exc})") from exc
-    declared_len = serialized.get("length")
+    declared_len = _require_int(name, "declared length", serialized.get("length"))
     _require(
         declared_len == len(raw),
         f"{name}: declared length {declared_len!r} != {len(raw)} decoded bytes",
@@ -196,6 +245,10 @@ def _check_manifest_stub(name, record, expected_docs):
 
 
 def _check_common(name, record, kind):
+    _require(
+        set(record) == _RECORD_KEYS,
+        f"{name}: top-level keys {sorted(record)} != {sorted(_RECORD_KEYS)}",
+    )
     _require(record.get("record_id") == name, f"{name}: record_id {record.get('record_id')!r}")
     _require(record.get("kind") == kind, f"{name}: kind {record.get('kind')!r} != {kind!r}")
     _require(
@@ -213,16 +266,12 @@ def verify_probe(raw, record):
     bytes somewhere else, or twice, cannot pass on a coincidence.
     """
     _check_common(PROBE_ID, record, "scaffolding-probe")
-    serialized = _stage(PROBE_ID, record, "tx_set")
+    serialized = _stage(PROBE_ID, record, _RECORD_STAGE[PROBE_ID])
     raw_bytes = _decode_bytes(PROBE_ID, serialized)
 
     declarations = record.get("declarations")
     _require(isinstance(declarations, dict), f"{PROBE_ID}: no declarations object")
-    offset = declarations.get("magic_offset")
-    _require(
-        isinstance(offset, int) and not isinstance(offset, bool) and offset >= 0,
-        f"{PROBE_ID}: declared magic_offset {offset!r} is not a non-negative integer",
-    )
+    offset = _require_int(PROBE_ID, "declared magic_offset", declarations.get("magic_offset"))
     window = raw_bytes[offset:offset + _MAGIC_LEN]
     _require(
         window == _MAGIC,
@@ -267,7 +316,7 @@ def verify_control(raw, record):
     vacuous.
     """
     _check_common(CONTROL_ID, record, "scaffolding-control")
-    serialized = _stage(CONTROL_ID, record, "header_template")
+    serialized = _stage(CONTROL_ID, record, _RECORD_STAGE[CONTROL_ID])
     raw_bytes = _decode_bytes(CONTROL_ID, serialized)
 
     _require(
@@ -293,11 +342,12 @@ def verify_control(raw, record):
     _require(isinstance(slots, list), f"{CONTROL_ID}: header_template carries no slots list")
     for slot in slots:
         _require(isinstance(slot, dict), f"{CONTROL_ID}: malformed slot {slot!r}")
-        offset, length = slot.get("offset"), slot.get("length")
+        where = f"slot {slot.get('name')!r}"
+        offset = _require_int(CONTROL_ID, f"{where} offset", slot.get("offset"))
+        length = _require_int(CONTROL_ID, f"{where} length", slot.get("length"), minimum=1)
         _require(
-            isinstance(offset, int) and isinstance(length, int)
-            and offset >= 0 and length >= 1 and offset + length <= len(raw_bytes),
-            f"{CONTROL_ID}: slot {slot.get('name')!r} is not a window into the template",
+            offset + length <= len(raw_bytes),
+            f"{CONTROL_ID}: {where} is not a window into the template",
         )
         _require(
             raw_bytes[offset:offset + length].hex() == slot.get("bytes_hex"),
