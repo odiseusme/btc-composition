@@ -68,7 +68,7 @@ thing neither pinned PR tests on its own.
 
 ## Phase 0: Lane controls and scaffolding
 
-- [ ] 0.1 Before-generation pin check (schedule point two of three).
+- [x] 0.1 Before-generation pin check (schedule point two of three).
   Create `fixtures/seam/PINS.md`; record the lane-start entry (point
   one, 2026-07-14) and the point-two entry: expected values from this
   document's pinned sources, actual values re-derived, comparison
@@ -79,7 +79,7 @@ thing neither pinned PR tests on its own.
   verify: PINS.md committed; every expected equals actual; expected
   fields diff-clean against the ledger; command, exit status, and
   actuals recorded; dated.
-- [ ] 0.2 Pin-movement procedure (standing control, written once).
+- [x] 0.2 Pin-movement procedure (standing control, written once).
   Document in `fixtures/seam/README.md`: on any pin movement at any
   time, halt generation; run the SPEC Section 0 seam-surface
   re-verification; derive the invalidation set (every artifact whose
@@ -88,7 +88,7 @@ thing neither pinned PR tests on its own.
   verify: procedure text exists AND one worked example is included
   deriving the invalidation set for a hypothetical grammar-doc pin
   move.
-- [ ] 0.3 Generator scaffolding under `fixtures/seam/gen/`, following
+- [x] 0.3 Generator scaffolding under `fixtures/seam/gen/`, following
   the established architecture: constants module; generator;
   independent oracle with its own transcribed literals (no imports from
   the generator's constants beyond the shared gate constants);
