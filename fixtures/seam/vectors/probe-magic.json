@@ -1,0 +1,38 @@
+{
+  "declarations": {
+    "magic_offset": 4
+  },
+  "kind": "scaffolding-probe",
+  "manifest_stub": {
+    "depends_on": [
+      "composition-handoff-SPEC.md",
+      "marker-grammar-DRAFT.md"
+    ],
+    "pin_hashes": {
+      "grammar_doc_sha256": "02790eaf4652a5710a81afed7128345a120e197b11513bee91079a4ac49166ff",
+      "spec_sha256": "5926f12a4427eabb30e7db31f623663b662316957b67fcfe9a852d15fc054831"
+    }
+  },
+  "notes": "Scaffolding probe (task 0.3). Magic-DEPENDENT target for the 0.6 regeneration test: its bytes embed the 4-byte payload magic at magic_offset, routed through the tx_set adapter boundary. The surrounding bytes are filler and assert no layout. manifest_stub carries the hash of each pinned document these bytes depend on, which is what the 0.2 procedure scans to derive an invalidation set.",
+  "record_id": "probe-magic",
+  "stages": [
+    {
+      "serialized": {
+        "bytes_hex": "0001020345524756ff",
+        "length": 9,
+        "segment_lengths": [
+          4,
+          4,
+          1
+        ],
+        "segment_offsets": [
+          0,
+          4,
+          8
+        ]
+      },
+      "stage": "tx_set"
+    }
+  ],
+  "status": "PRE-FREEZE"
+}

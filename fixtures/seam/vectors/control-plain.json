@@ -1,0 +1,34 @@
+{
+  "declarations": {},
+  "kind": "scaffolding-control",
+  "manifest_stub": {
+    "depends_on": [],
+    "pin_hashes": {}
+  },
+  "notes": "Scaffolding control (task 0.3). INVARIANT control for the 0.6 regeneration test: a header_template record with no grammar dependency \u2014 no magic in its bytes, no pin hash in its manifest stub. Flipping the magic constant must leave this file byte-identical; without that, the regeneration test cannot tell a working rebuild from one that rewrites everything.",
+  "record_id": "control-plain",
+  "stages": [
+    {
+      "serialized": {
+        "bytes_hex": "0000000000000000",
+        "length": 8,
+        "slots": [
+          {
+            "bytes_hex": "00000000",
+            "length": 4,
+            "name": "slot_a",
+            "offset": 0
+          },
+          {
+            "bytes_hex": "00000000",
+            "length": 4,
+            "name": "slot_b",
+            "offset": 4
+          }
+        ]
+      },
+      "stage": "header_template"
+    }
+  ],
+  "status": "PRE-FREEZE"
+}
