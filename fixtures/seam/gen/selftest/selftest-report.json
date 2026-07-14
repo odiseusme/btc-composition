@@ -7,24 +7,31 @@
     "oracle_verdict": "GREEN",
     "run": "full 0.3 pipeline into a temporary directory"
   },
+  "bound_to_sha256": {
+    "generate.py": "c4d43a94dbe9e33fdcff631dc2826d401cc1165df19cc161d01b83c3d2fc30ac",
+    "initial_tree_snapshot": "9a55d7db4ce3f7b7785d6eb7cc1ed36856d31b535bda5af16706a53f759fa5eb",
+    "self_test_defect.py": "5e84981c2d4845b5d18dcdc4c389b18fe1fbfb8d7f9f196775157f4ef82ec7df",
+    "verify.py": "662ae1b6e7e51ee0bc0e27226eb8de912d328643c3ce2d7c4cb298d19a2feb8a"
+  },
   "command": "python3 fixtures/seam/gen/self_test_defect.py",
+  "completed_utc": "2026-07-14T15:36:38Z",
   "detection": {
     "oracle_verdict": "REJECTED",
     "rejection_verbatim": "probe-magic: bytes at declared offset 4 are '44524756', not the magic '45524756'"
   },
-  "exit_code": 0,
+  "phases_all_green": true,
   "python_version": "3.12.3",
   "seeded_defect": {
     "file": "probe-magic.json",
-    "mutation": "XOR 0x01 on the first byte of the declared magic window",
+    "mutation": "XOR 0x01 on the first byte of the declared magic window, via a two-character edit of the file text",
     "new_byte_hex": "44",
     "old_byte_hex": "45",
     "stage_byte_offset": 4
   },
-  "started_utc": "2026-07-14T14:20:55Z",
+  "started_utc": "2026-07-14T15:36:38Z",
   "task": "0.4 oracle seeded-defect self-test",
-  "tree_untouched": {
-    "committed_files_hashed": 11,
-    "verdict": "byte-identical before and after"
+  "tree_check": {
+    "recorded_entries": 11,
+    "verdict": "recorded state identical at start and end of phases"
   }
 }
