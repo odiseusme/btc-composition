@@ -111,7 +111,7 @@ thing neither pinned PR tests on its own.
   cross-transcription assert green; forbidden-import check green; grep
   for the named banned identifiers finds nothing; adapter boundary test
   proves each stage's inputs can be supplied externally.
-- [ ] 0.4 Oracle seeded-defect self-test. A test mode corrupts one
+- [x] 0.4 Oracle seeded-defect self-test. A test mode corrupts one
   generator output in a temporary run; the oracle must detect it and
   fail. depends on: 0.3.
   verify: the self-test script demonstrates detection of the seeded
