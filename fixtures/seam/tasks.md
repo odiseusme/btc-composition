@@ -127,7 +127,9 @@ thing neither pinned PR tests on its own.
   category on a fixture the SPEC marks structure-dependent (the
   exact-vs-set rule), any artifact claiming a SPEC 11.2 exclusion.
   Schema-specific manifest validation is explicitly NOT in v1 (added by
-  5b.10 after decision 14.3). [P] with 0.3.
+  5b.10 after decision 14.3). Pre-populates the PINS key at core-done,
+  carrying the evidence of the already-executed task 0.1 (the ledger
+  predates this table by construction). [P] with 0.3.
   verify: checker green on the pre-populated table; one negative
   fixture per rejection rule listed above, each failing with a
   diagnostic naming the offending key or rule.

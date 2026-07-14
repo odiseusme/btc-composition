@@ -21,10 +21,29 @@ mismatch.
 
 ### Point one of three: lane start
 
-Date: 2026-07-14. Executed at lane opening (alignment session):
-both PR heads, grammar doc hash, and base commit verified equal to
-expected. Recorded here retroactively per tasks.md conventions; the
-SPEC pre-freeze hash was added to the pin set at point two.
+RECONSTRUCTION, and labelled as one: this check ran at the lane-opening
+session, before this ledger existed, so the evidence below is
+transcribed from that session's log rather than re-derived here. It is
+recorded to the same standard as any other entry — command, exit
+status, actual value — because an entry that merely asserts the pins
+were equal is an assurance, which is the one thing this ledger does not
+accept. A later re-derivation of these actuals is a check of its own
+and would be its own entry.
+
+Date: 2026-07-14
+Commands: git ls-remote (PR refs); sha256sum (grammar doc);
+git rev-parse HEAD
+Exit status: 0 (all)
+Actuals:
+- #1182 head: 247b07e99c19ba195e5cdc21a4733ad546d77edf  MATCH
+- #1180 head: aff008b85f8b7562867e6cc2292ff174627e7732  MATCH
+- grammar doc:
+  02790eaf4652a5710a81afed7128345a120e197b11513bee91079a4ac49166ff  MATCH
+- repo HEAD: 283062c (exact, pre-merge)  MATCH
+- SPEC pre-freeze sha256: NOT IN THE PIN SET at point one. It was added
+  to the pin set at point two (below), which is why no actual for it is
+  recorded here and why none can be reconstructed after the fact.
+Result: every pin then in the set was equal. Lane opened.
 
 ### Point two of three: before generation (task 0.1)
 
